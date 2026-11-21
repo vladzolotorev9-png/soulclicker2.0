@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0812">
+<title>ПЕПЕЛЬНЫЙ ПРИЗЫВ — пиксельный дарк-фэнтези кликер</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="scanlines"></div>
+<div id="grain"></div>
+
+<div id="app">
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-mark" id="brand-mark"></span>
+      <span class="brand-txt">ПЕПЕЛЬНЫЙ<br><b>ПРИЗЫВ</b></span>
+    </div>
+
+    <div class="hud">
+      <div class="hud-cell souls-cell">
+        <span class="hud-ic" id="ic-soul"></span>
+        <span class="hud-val" id="souls-val">0</span>
+        <span class="hud-lbl">ДУШ</span>
+      </div>
+      <div class="hud-cell">
+        <span class="hud-ic" id="ic-sword"></span>
+        <span class="hud-val" id="click-val">2</span>
+        <span class="hud-lbl">УРОН</span>
+      </div>
+      <div class="hud-cell">
+        <span class="hud-ic" id="ic-dps"></span>
+        <span class="hud-val" id="dps-val">0</span>
+        <span class="hud-lbl">В СЕК</span>
+      </div>
+      <div class="hud-cell hp-cell">
+        <span class="hud-ic" id="ic-hp"></span>
+        <span class="hud-val" id="hp-val">100/100</span>
+        <span class="hud-lbl">ЖИЗНЬ</span>
+      </div>
+      <div class="hud-cell seals-cell">
+        <span class="hud-ic" id="ic-seal"></span>
+        <span class="hud-val" id="seals-val">0</span>
+        <span class="hud-lbl">ПЕЧАТИ</span>
+      </div>
+    </div>
+
+    <div class="tools">
+      <button class="tool cloud-tool" id="btn-profile" title="Профиль"><i class="cloud-dot off" id="cloud-dot"></i>ПРОФИЛЬ</button>
+      <button class="tool" id="btn-sound" title="Звук">ЗВУК: ВКЛ</button>
+      <button class="tool" id="btn-reset" title="Сброс">СБРОС</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="stage">
+      <div class="plate">
+        <div class="plate-top">
+          <span id="zone-name">СКЛЕП ЗАБЫТЫХ</span>
+          <span id="wave-badge">ВОЛНА 1</span>
+        </div>
+        <div class="enemy-row">
+          <span id="enemy-name">ПЕПЕЛЬНЫЙ БЕС</span>
+          <span id="boss-tag" class="boss-tag hidden">БОСС</span>
+        </div>
+        <div class="hpbar"><div class="hpfill" id="hp-fill"></div><span class="hptext" id="hp-text">9 / 9</span></div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="scene" width="256" height="144"></canvas>
+        <div class="buff-badge hidden" id="buff-badge">КРИК ДУШ <b>0.0</b>с</div>
+        <div class="combo-badge hidden" id="combo-badge"></div>
+      </div>
+
+      <div class="skills">
+        <button class="skill" id="sk-q" data-key="q">
+          <span class="cd" id="cd-q"></span>
+          <span class="kb">Q</span>
+          <span class="skill-txt"><b>УДАР БЕЗДНЫ</b><i>20× урон клика</i></span>
+        </button>
+        <button class="skill" id="sk-e" data-key="e">
+          <span class="cd" id="cd-e"></span>
+          <span class="kb">E</span>
+          <span class="skill-txt"><b>КРИК ДУШ</b><i>×2 урон и DPS, 12с</i></span>
+        </button>
+      </div>
+
+      <div class="hint">КЛИКАЙ ПО ВРАГУ &nbsp;·&nbsp; <b>ПРОБЕЛ</b> — УДАР &nbsp;·&nbsp; <b>Q</b> / <b>E</b> — СИЛЫ</div>
+    </section>
+
+    <aside id="panel">
+      <nav class="tabs">
+        <button class="tab active" data-tab="up">КЛИНОК</button>
+        <button class="tab" data-tab="units">СЛУГИ</button>
+        <button class="tab" data-tab="bag">СУМКА<span class="tab-dot hidden" id="bag-dot"></span></button>
+        <button class="tab" data-tab="ritual">РИТУАЛ</button>
+      </nav>
+      <div class="pane active" id="pane-up"></div>
+      <div class="pane" id="pane-units"></div>
+      <div class="pane" id="pane-bag"></div>
+      <div class="pane" id="pane-ritual"></div>
+      <div class="panel-foot">
+        <span>АВТОСОХРАНЕНИЕ</span><span id="save-dot" class="dot">●</span>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<div class="overlay" id="intro">
+  <div class="intro-box">
+    <div class="intro-rune" id="intro-rune"></div>
+    <h1>ПЕПЕЛЬНЫЙ<br>ПРИЗЫВ</h1>
+    <p class="lore">
+      Ты спал в склепе триста лет, и печать держала тебя.<br>
+      Теперь она треснула — и тени пришли первыми.<br><br>
+      Отнимай их души. Выкуй клинок. Позови слуг.<br>
+      Спускайся глубже, пока бездна не узнает твоё имя.
+    </p>
+    <button class="big-btn" id="btn-start">ВОЙТИ В СКЛЕП</button>
+    <div class="intro-foot">КЛИК — УДАР &nbsp;·&nbsp; Q / E — СИЛЫ &nbsp;·&nbsp; ПРОБЕЛ — БЫСТРЫЙ УДАР</div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="modal">
+  <div class="modal-box">
+    <h2 id="modal-title">ЗАГОЛОВОК</h2>
+    <div id="modal-text" class="modal-text">Текст</div>
+    <div class="modal-actions">
+      <button class="big-btn" id="modal-ok">ДА</button>
+      <button class="big-btn ghost" id="modal-cancel">НЕТ</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/tg.js"></script>
+<script src="js/art.js"></script>
+<script src="js/items.js"></script>
+<script src="js/account.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

@@ -726,6 +726,24 @@ main{
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
 
+/* ============================================================
+   Один вход в игру.
+
+   Кнопка «Играть» в меню бота и кнопка в ответе на /start ведут
+   на разные адреса. Чтобы аккаунт и прогресс всегда были одни и те же,
+   любая страница на этом домене переадресует на канонический адрес.
+   ============================================================ */
+(function () {
+  try {
+    if (location.hostname === 'vladzolotorev9-png.github.io') {
+      var canon = '/soulclicker2.0/index.html';
+      if (location.pathname !== canon) {
+        location.replace(canon + location.search);
+      }
+    }
+  } catch (e) { /* ничего страшного */ }
+})();
+
 </script>
 <script>
 /* ============================================================

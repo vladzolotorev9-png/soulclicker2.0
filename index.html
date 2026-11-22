@@ -1338,7 +1338,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795387840';
+window.BUILD_STAMP = '1795388893';
 
 /* ============================================================
    Один вход в игру.
@@ -2474,6 +2474,7 @@ async function localSignin(login, password){
 }
 
 function applyLocal(acc){
+  clearOut();
   me = { pid: acc.pid, code: acc.code, name: acc.name, login: acc.login, local: true };
   status = 'off';                 // облако недоступно — сохраняем в устройстве
   store();
@@ -2571,6 +2572,11 @@ function init(){
   // Сначала берём уже сохранённый профиль (например, вход через бота),
   // и только потом — локальный ник.
   if(localMode()){
+    if(isOut()){
+      // человек сам нажал «выйти» — показываем экран входа,
+      // но кнопка «ВОЙТИ КАК …» остаётся
+      return;
+    }
     const stored = readStored();
     if(stored && stored.pid){
       me = stored;
@@ -2579,7 +2585,10 @@ function init(){
       return;
     }
     const acc = localCurrent();
-    if(acc) applyLocal(acc);
+    if(acc){ applyLocal(acc); return; }
+    // последняя страховка: аккаунт мог остаться только в «последнем»
+    const last = lastAccount();
+    if(last && last.pid){ restoreLast(); }
     return;
   }
 
@@ -2832,6 +2841,10 @@ function signin(login, password){
 
 /* ---------- быстрый возврат в последний аккаунт ---------- */
 const LAST_KEY = 'ashen-last-account';
+const OUT_KEY = 'ashen-logged-out';
+const markOut = () => { try{ localStorage.setItem(OUT_KEY, '1'); }catch(e){} };
+const clearOut = () => { try{ localStorage.removeItem(OUT_KEY); }catch(e){} };
+const isOut = () => { try{ return localStorage.getItem(OUT_KEY) === '1'; }catch(e){ return false; } };
 
 function remember(acc){
   if(!acc || !acc.pid) return;
@@ -2841,6 +2854,7 @@ function lastAccount(){
   try{ return JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); }catch(e){ return null; }
 }
 function restoreLast(){
+  clearOut();
   const acc = lastAccount();
   if(!acc || !acc.pid) return false;
   me = acc;
@@ -2886,6 +2900,7 @@ function tgPoll(token){
 }
 
 function logout(){
+  markOut();
   const book = localBook();
   book.current = null;
   saveBook(book);
@@ -4514,6 +4529,16 @@ function openProfile(){
     const inShell = tgSdk || tgUa;
 
     const buildTag = window.BUILD_STAMP ? ('СБОРКА ' + String(window.BUILD_STAMP).slice(-5) + ' · ') : '';
+    const storageInfo = (() => {
+      try{
+        const names = [];
+        for(let i = 0; i < localStorage.length; i++) names.push(localStorage.key(i));
+        const hasAcc = !!localStorage.getItem('ashen-account-v1');
+        const hasLast = !!localStorage.getItem('ashen-last-account');
+        return 'ХРАНИЛИЩЕ: ' + names.length + ' ЗАП. · АККАУНТ ' + (hasAcc ? 'ЕСТЬ' : 'НЕТ') +
+               ' · ПОСЛЕДНИЙ ' + (hasLast ? 'ЕСТЬ' : 'НЕТ');
+      }catch(e){ return 'ХРАНИЛИЩЕ НЕДОСТУПНО'; }
+    })();
     const diag = '<div class="prof-debug">' + buildTag + 'TELEGRAM: SDK ' + (tgSdk ? 'да' : 'нет') +
       ' · подпись ' + tgSig + ' · браузер TG ' + (tgUa ? 'да' : 'нет') + '</div>';
 
@@ -4550,6 +4575,7 @@ function openProfile(){
     html =
       '<div class="prof">' +
         diag +
+        '<div class="prof-debug">' + storageInfo + '</div>' +
         backBlock +
         tgBlock +
         '<div class="auth-tabs">' +
@@ -4723,7 +4749,8 @@ function openProfile(){
       window.ACCOUNT.tgPoll(token).then(r => {
         if(r.done){
           clearInterval(timer);
-          finish('ВОШЁЛ ЧЕРЕЗ TELEGRAM · ' + (r.player.name || ''));
+          const codeTxt = r.player && r.player.code ? (' · КОД ' + r.player.code) : '';
+          finish('ВОШЁЛ ЧЕРЕЗ TELEGRAM · ' + (r.player.name || '') + codeTxt);
           return;
         }
         if(r.status === 'offline'){

@@ -580,6 +580,11 @@ main{
 .mini-btn.wide{display:block; width:100%; margin:4px 0; text-align:center;}
 
 
+.auth-msg.good{color:#9ff0d4;}
+.auth-msg.bad{color:#ff8b93;}
+.prof-save{margin:8px 0 4px; padding:6px 0; border-top:1px solid #241d33; border-bottom:1px solid #241d33;}
+
+
 </style>
 </head>
 <body>
@@ -1632,6 +1637,7 @@ function readStored(){
   }catch(e){ return null; }
 }
 function store(){
+  try{ remember(me); }catch(e){}
   if(me){
     try{ localStorage.setItem(KEY, JSON.stringify(me)); }catch(e){}
   }
@@ -1932,6 +1938,25 @@ function signin(login, password){
     .catch(() => localSignin(login, password));
 }
 
+/* ---------- быстрый возврат в последний аккаунт ---------- */
+const LAST_KEY = 'ashen-last-account';
+
+function remember(acc){
+  if(!acc || !acc.pid) return;
+  try{ localStorage.setItem(LAST_KEY, JSON.stringify({ pid: acc.pid, name: acc.name, login: acc.login, code: acc.code })); }catch(e){}
+}
+function lastAccount(){
+  try{ return JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); }catch(e){ return null; }
+}
+function restoreLast(){
+  const acc = lastAccount();
+  if(!acc || !acc.pid) return false;
+  me = acc;
+  status = 'off';
+  store();
+  return true;
+}
+
 /* ---------- вход через Telegram (подтверждение в боте) ---------- */
 const TG_KEY = 'ashen-tg-login';
 const TG_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1997,6 +2022,8 @@ window.ACCOUNT = {
   logout,
   localMode,
   tgStart,
+  lastAccount,
+  restoreLast,
   tgPending,
   tgCancel,
   tgPoll,
@@ -3240,13 +3267,22 @@ function openProfile(){
     return;
   }
   const info = window.ACCOUNT.info();
-  const byLogin = typeof info.pid === 'string' && info.pid.indexOf('u:') === 0;
-  // Аккаунт Telegram бывает двух видов: с подписью (SDK) и подтверждённый
+  const byLogin = typeof info.pid === 'string' && info.pid.indexOf('u:') === 0;  // Аккаунт Telegram бывает двух видов: с подписью (SDK) и подтверждённый
   // через бота (pid вида tg:...). Второй тоже считается входом через Telegram.
   const byTgAccount = typeof info.pid === 'string' && info.pid.indexOf('tg:') === 0;
   const byTelegram = !!info.tg || byTgAccount;
   const tgViaBot = byTgAccount && !info.tg;
   let html = '';
+
+  // Блок прогресса: видно, что накоплено и сохраняется ли это
+  const progressBlock =
+    '<div class="prof-save">' +
+      '<div class="prof-row"><span>ВОЛНА</span><b>' + S.wave + ' · рекорд ' + S.best + '</b></div>' +
+      '<div class="prof-row"><span>ДУШИ</span><b>' + fmt(S.total) + '</b></div>' +
+      '<div class="prof-row"><span>УБИЙСТВ</span><b>' + fmt(S.kills) + '</b></div>' +
+      '<button class="mini-btn wide" id="check-save">ПРОВЕРИТЬ СОХРАНЕНИЕ</button>' +
+      '<div class="auth-msg" id="save-check"></div>' +
+    '</div>';
 
   if(byTelegram){
     const tgNick = info.login ? String(info.login) : '';
@@ -3264,6 +3300,7 @@ function openProfile(){
         '<div class="prof-row"><span>ВХОД</span><b>ЧЕРЕЗ TELEGRAM</b></div>' +
         '<div class="prof-row"><span>ИГРОК</span><b>' + esc(info.name || 'СТРАЖ') + '</b></div>' +
         (tgNick ? '<div class="prof-row"><span>НИК</span><b>' + esc(tgNick) + '</b></div>' : '') +
+        progressBlock +
         '<div class="prof-hint">' + (tgViaBot
           ? 'Вход подтверждён через бота — аккаунт привязан<br>к вашему Telegram и открывается сам.'
           : (tgNick
@@ -3284,6 +3321,7 @@ function openProfile(){
       '<div class="prof">' +
         '<div class="prof-row"><span>ВХОД</span><b>НИК И ПАРОЛЬ</b></div>' +
         '<div class="prof-row"><span>НИК</span><b>' + esc(info.login || info.name) + '</b></div>' +
+        progressBlock +
         '<div class="prof-hint">' +
           (info.local
             ? 'Аккаунт хранится в этом устройстве и открывается сам.'
@@ -3308,6 +3346,10 @@ function openProfile(){
       ' · подпись ' + tgSig + ' · браузер TG ' + (tgUa ? 'да' : 'нет') + '</div>';
 
     const pendingTg = (window.ACCOUNT && window.ACCOUNT.tgPending) ? window.ACCOUNT.tgPending() : null;
+    const lastAcc = (window.ACCOUNT && window.ACCOUNT.lastAccount) ? window.ACCOUNT.lastAccount() : null;
+    const backBlock = (!pendingTg && lastAcc && lastAcc.name)
+      ? '<button class="big-btn small wide" id="restore-acc">ВОЙТИ КАК ' + esc(lastAcc.name) + '</button>'
+      : '';
     const waitBlock = pendingTg
       ? '<div class="prof-row"><span>ШАГ 1</span><b>КОД</b></div>' +
         '<div class="prof-code big-code" id="tg-code">' + esc(pendingTg) + '</div>' +
@@ -3336,6 +3378,7 @@ function openProfile(){
     html =
       '<div class="prof">' +
         diag +
+        backBlock +
         tgBlock +
         '<div class="auth-tabs">' +
           '<button class="auth-tab active" data-auth="in">ВХОД</button>' +
@@ -3430,6 +3473,16 @@ function openProfile(){
   enter($('#up-pass2'), $('#up-btn'));
 
   // Telegram: связать с аккаунтом по нику
+  const restoreBtn = $('#restore-acc');
+  if(restoreBtn){
+    restoreBtn.addEventListener('click', () => {
+      if(window.ACCOUNT.restoreLast()){
+        say('ВХОЖУ В АККАУНТ…', false);
+        setTimeout(() => { hideModal(); location.reload(); }, 300);
+      }
+    });
+  }
+
   const tgLoginBtn = $('#tg-login-btn');
   if(tgLoginBtn){
     tgLoginBtn.addEventListener('click', () => {
@@ -3499,6 +3552,35 @@ function openProfile(){
       logoutBtn.disabled = true;
       say('ВЫХОЖУ…', false);
       window.ACCOUNT.logout().then(() => { save(); setTimeout(() => { hideModal(); location.reload(); }, 400); });
+    });
+  }
+
+  // Проверка сохранения: пишем в облако, читаем обратно и показываем результат
+  const checkSaveBtn = $('#check-save');
+  if(checkSaveBtn){
+    checkSaveBtn.addEventListener('click', () => {
+      const out = $('#save-check');
+      if(out){ out.textContent = 'ПРОВЕРЯЮ…'; out.className = 'auth-msg'; }
+      save();
+      const now = new Date();
+      const stamp = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      window.ACCOUNT.pushNow(true)
+        .then(() => window.ACCOUNT.pull())
+        .then(() => {
+          if(!out) return;
+          if(window.ACCOUNT.status() === 'cloud'){
+            out.textContent = '✓ СОХРАНЕНО В ОБЛАКЕ · ВОЛНА ' + S.wave + ' · ' + stamp;
+            out.className = 'auth-msg good';
+          }else{
+            out.textContent = '✓ СОХРАНЕНО В УСТРОЙСТВЕ · ВОЛНА ' + S.wave + ' · ' + stamp;
+            out.className = 'auth-msg good';
+          }
+        })
+        .catch(() => {
+          if(!out) return;
+          out.textContent = '⚠ ОБЛАКО НЕДОСТУПНО — ПРОГРЕСС В УСТРОЙСТВЕ';
+          out.className = 'auth-msg bad';
+        });
     });
   }
 

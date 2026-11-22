@@ -572,7 +572,7 @@ main{
 .mini-btn.wide{width:100%; padding:8px 10px; font-size:8.5px; letter-spacing:.1em; margin:6px 0 4px;}
 
 
-.prof-debug{font-size:7.5px; color:#4e4658; letter-spacing:.06em; margin-top:6px;}
+.prof-debug{font-size:8px; color:#7a6f8a; letter-spacing:.06em; margin:0 0 6px; text-align:center;}
 
 
 </style>
@@ -3226,8 +3226,8 @@ function openProfile(){
     const tgUa = /Telegram/i.test(ua);
     const inShell = tgSdk || tgUa;
 
-    const diag = '<div class="prof-hint prof-debug">SDK: ' + (tgSdk ? 'да' : 'нет') +
-      ' · подпись: ' + tgSig + ' · TG-UA: ' + (tgUa ? 'да' : 'нет') + '</div>';
+    const diag = '<div class="prof-debug">TELEGRAM: SDK ' + (tgSdk ? 'да' : 'нет') +
+      ' · подпись ' + tgSig + ' · браузер TG ' + (tgUa ? 'да' : 'нет') + '</div>';
 
     const tgBlock = info.tg ? '' : (inShell
       ? '<div class="prof-row"><span>TELEGRAM</span><b>БЕЗ ПОДПИСИ</b></div>' +
@@ -3239,6 +3239,7 @@ function openProfile(){
 
     html =
       '<div class="prof">' +
+        diag +
         tgBlock +
         '<div class="auth-tabs">' +
           '<button class="auth-tab active" data-auth="in">ВХОД</button>' +

@@ -2765,7 +2765,45 @@ function signup(login, password){
     .catch(() => localSignup(login, password));
 }
 
+// Привязать ник и пароль к текущему аккаунту (в том числе к Telegram).
+// Сервер может не уметь /bind — тогда сохраняем локально, на этом устройстве,
+// и вход по нику будет возвращать ТОТ ЖЕ аккаунт и прогресс.
+function bindLocalCreds(login, password){
+  login = String(login || '').trim();
+  if(!validLogin(login)) return Promise.resolve({ ok:false, error:'НИК: 3–20 СИМВОЛОВ — БУКВЫ, ЦИФРЫ И _' });
+  if(String(password || '').length < 4) return Promise.resolve({ ok:false, error:'ПАРОЛЬ: МИНИМУМ 4 СИМВОЛА' });
+  const book = localBook();
+  const key = login.toLowerCase();
+  const mine = me && me.pid;
+  if(book.accounts[key] && book.accounts[key].pid !== mine){
+    return Promise.resolve({ ok:false, error:'ЭТОТ НИК УЖЕ ЗАНЯТ НА ЭТОМ УСТРОЙСТВЕ' });
+  }
+  const salt = randomHex(8);
+  return hashPassword(password, salt).then(hash => {
+    book.accounts[key] = {
+      login,
+      name: (me && me.name) || login,
+      salt, hash,
+      code: (me && me.code) || makeCode(),
+      pid: mine || ('guest:' + randomHex(16)),
+      created: Date.now()
+    };
+    book.current = key;
+    saveBook(book);
+    if(me){
+      me.login = login;
+      store();
+    }else{
+      applyLocal(book.accounts[key]);
+    }
+    return { ok:true, player: me };
+  });
+}
+
 function bindCreds(login, password){
+  if(localMode()){
+    return bindLocalCreds(login, password);
+  }
   return request('/bind', { login, password })
     .then(r => {
       if(!r.ok || !r.data.player) return { ok:false, error: r.data.error || 'НЕ ПОЛУЧИЛОСЬ' };
@@ -2774,7 +2812,8 @@ function bindCreds(login, password){
       store();
       return { ok:true, player: me };
     })
-    .catch(() => ({ ok:false, error: 'НЕТ СВЯЗИ С СЕРВЕРОМ' }));
+    // сервер без поддержки /bind — не теряем возможность задать ник
+    .catch(() => bindLocalCreds(login, password));
 }
 
 function signin(login, password){
@@ -4391,9 +4430,11 @@ function openProfile(){
     return;
   }
   const info = window.ACCOUNT.info();
-  const byLogin = typeof info.pid === 'string' && info.pid.indexOf('u:') === 0;  // Аккаунт Telegram бывает двух видов: с подписью (SDK) и подтверждённый
-  // через бота (pid вида tg:...). Второй тоже считается входом через Telegram.
+  // Аккаунт бывает трёх видов: ник+пароль на сервере (u:...), подтверждённый
+  // через бота (tg:...) и локальный ник на сайте (guest:..., но с логином).
   const byTgAccount = typeof info.pid === 'string' && info.pid.indexOf('tg:') === 0;
+  const byLogin = !!info.pid && !byTgAccount &&
+    (info.pid.indexOf('u:') === 0 || !!info.login);
   const byTelegram = !!info.tg || byTgAccount;
   const tgViaBot = byTgAccount && !info.tg;
   let html = '';

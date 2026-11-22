@@ -503,6 +503,19 @@ main{
 .auth-msg{font-size:8.5px; min-height:12px; text-align:center; letter-spacing:.08em; color:#9a90ab;}
 .auth-msg.bad{color:#e0504f;}
 .big-btn.small{padding:8px 10px; font-size:9px;}
+
+/* вход через Telegram и разделитель */
+.tg-login{
+  display:block; text-align:center; text-decoration:none; margin:2px 0 4px;
+  background:linear-gradient(180deg,#4aa3df,#2f7fbf);
+  color:#06121c; border:1px solid #7fc4ea; letter-spacing:.1em;
+}
+.tg-login:hover{background:linear-gradient(180deg,#5cb2ec,#368ccd);}
+.auth-orl{
+  display:flex; align-items:center; gap:8px; margin:8px 0 6px;
+  font-size:8px; color:#6b6278; letter-spacing:.16em; text-transform:uppercase;
+}
+.auth-orl::before, .auth-orl::after{content:''; flex:1; height:1px; background:#2a2337;}
 .modal-actions{display:flex; gap:10px; justify-content:center;}
 
 #toast{
@@ -1503,6 +1516,7 @@ window.ITEMS = {
 'use strict';
 
 const KEY = 'ashen-account-v1';
+const LOCAL_KEY = 'ashen-local-accounts-v1';
 const API = ((window.API_BASE || '').replace(/\/+$/, '')) + '/api';
 
 let me = null;             // {pid, code, name}
@@ -1512,6 +1526,76 @@ let pushTimer = 0;
 let lastPushAt = 0;
 let pulling = false;
 const PUSH_MIN_INTERVAL = 45000;   // не чаще раза в 45 с (бережём лимиты KV)
+
+/* ---------- локальные аккаунты (сайт без сервера) ---------- */
+function localBook(){
+  try{ return JSON.parse(localStorage.getItem(LOCAL_KEY) || '{"accounts":{},"current":null}'); }
+  catch(e){ return { accounts:{}, current:null }; }
+}
+function saveBook(book){
+  try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(book)); }catch(e){}
+}
+function localMode(){
+  return !!window.STATIC_HOST;
+}
+function randomHex(bytes){
+  const view = new Uint8Array(bytes);
+  (window.crypto || window.msCrypto).getRandomValues(view);
+  return Array.from(view).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function makeCode(){
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const part = () => Array.from({length:4}, () => alphabet[Math.floor(Math.random()*alphabet.length)]).join('');
+  return part() + '-' + part();
+}
+async function hashPassword(password, salt){
+  const text = new TextEncoder().encode(salt + ':' + password);
+  const digest = await crypto.subtle.digest('SHA-256', text);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function validLogin(login){
+  return /^[A-Za-zА-Яа-яЁё0-9_]{3,20}$/.test(String(login || '').trim());
+}
+
+async function localSignup(login, password){
+  login = String(login || '').trim();
+  if(!validLogin(login)) return { ok:false, error:'НИК: 3–20 СИМВОЛОВ — БУКВЫ, ЦИФРЫ И _' };
+  if(String(password || '').length < 4) return { ok:false, error:'ПАРОЛЬ: МИНИМУМ 4 СИМВОЛА' };
+  const book = localBook();
+  const key = login.toLowerCase();
+  if(book.accounts[key]) return { ok:false, error:'ЭТОТ НИК УЖЕ ЗАНЯТ НА ЭТОМ УСТРОЙСТВЕ' };
+  const salt = randomHex(8);
+  const acc = { login: login, name: login, salt, hash: await hashPassword(password, salt),
+                code: makeCode(), pid: 'guest:' + randomHex(16), created: Date.now() };
+  book.accounts[key] = acc;
+  book.current = key;
+  saveBook(book);
+  applyLocal(acc);
+  return { ok:true, player: me };
+}
+
+async function localSignin(login, password){
+  const book = localBook();
+  const key = String(login || '').trim().toLowerCase();
+  const acc = book.accounts[key];
+  if(!acc) return { ok:false, error:'НЕВЕРНЫЙ НИК ИЛИ ПАРОЛЬ' };
+  const hash = await hashPassword(password, acc.salt);
+  if(hash !== acc.hash) return { ok:false, error:'НЕВЕРНЫЙ НИК ИЛИ ПАРОЛЬ' };
+  book.current = key;
+  saveBook(book);
+  applyLocal(acc);
+  return { ok:true, player: me };
+}
+
+function applyLocal(acc){
+  me = { pid: acc.pid, code: acc.code, name: acc.name, login: acc.login, local: true };
+  status = 'off';                 // облако недоступно — сохраняем в устройстве
+  store();
+}
+function localCurrent(){
+  const book = localBook();
+  return book.current ? book.accounts[book.current] : null;
+}
 
 function readStored(){
   try{
@@ -1593,6 +1677,14 @@ function init(){
   // В Telegram личность даёт сам Telegram — это всегда главный вход
   if(inTelegram()){
     register().then(() => pull()).catch(() => { status = 'error'; store(); });
+    return;
+  }
+
+  // На статическом сайте сервера нет: аккаунт живёт в устройстве
+  // и восстанавливается сам, без сети и без повторного ввода пароля
+  if(localMode()){
+    const acc = localCurrent();
+    if(acc) applyLocal(acc);
     return;
   }
 
@@ -1766,6 +1858,7 @@ function reset(){
 
 /* ---------- вход по нику и паролю ---------- */
 function signup(login, password){
+  if(localMode()) return localSignup(login, password);
   return request('/signup', { login, password })
     .then(r => {
       if(!r.ok || !r.data.player) return { ok:false, error: r.data.error || 'НЕ ПОЛУЧИЛОСЬ' };
@@ -1775,7 +1868,7 @@ function signup(login, password){
       // прогресс, накопленный до регистрации, уезжает в новый аккаунт
       return pushNow(true).then(() => ({ ok:true, player: me }));
     })
-    .catch(() => ({ ok:false, error: 'НЕТ СВЯЗИ С СЕРВЕРОМ' }));
+    .catch(() => localSignup(login, password));
 }
 
 function bindCreds(login, password){
@@ -1791,6 +1884,7 @@ function bindCreds(login, password){
 }
 
 function signin(login, password){
+  if(localMode()) return localSignin(login, password);
   return request('/signin', { login, password })
     .then(r => {
       if(!r.ok || !r.data.player) return { ok:false, error: r.data.error || 'НЕВЕРНЫЙ НИК ИЛИ ПАРОЛЬ' };
@@ -1799,7 +1893,18 @@ function signin(login, password){
       store();
       return pull().then(() => ({ ok:true, player: me }));
     })
-    .catch(() => ({ ok:false, error: 'НЕТ СВЯЗИ С СЕРВЕРОМ' }));
+    .catch(() => localSignin(login, password));
+}
+
+function logout(){
+  const book = localBook();
+  book.current = null;
+  saveBook(book);
+  me = null;
+  status = 'off';
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  store();
+  return Promise.resolve({ ok:true });
 }
 
 /* ---------- публичный интерфейс ---------- */
@@ -1817,8 +1922,10 @@ window.ACCOUNT = {
   reset,
   signup,
   signin,
+  logout,
+  localMode,
   bind: bindCreds,
-  info(){ return Object.assign({ tg: inTelegram(), status }, me || {}); },
+  info(){ return Object.assign({ tg: inTelegram(), status, local: localMode() }, me || {}); },
   hasAccount(){ return !!me; },
   status(){ return status; }
 };
@@ -3094,24 +3201,22 @@ function openProfile(){
       '<div class="prof">' +
         '<div class="prof-row"><span>ВХОД</span><b>НИК И ПАРОЛЬ</b></div>' +
         '<div class="prof-row"><span>НИК</span><b>' + esc(info.login || info.name) + '</b></div>' +
-        '<div class="prof-hint">Прогресс хранится в аккаунте.<br>' +
-          'На другом устройстве войдите этим же ником и паролем.</div>' +
-      '</div>';
-  } else if(window.STATIC_HOST){
-    // Статический хостинг: здесь нет сервера с ником и паролем,
-    // зато прогресс переносится кодом доступа.
-    html =
-      '<div class="prof">' +
-        '<div class="prof-row"><span>ПРОФИЛЬ</span><b>ГОСТЬ</b></div>' +
-        '<div class="prof-hint">Игра открыта в интернете, поэтому ник и пароль<br>' +
-          'доступны в локальной версии на компьютере.<br>' +
-          'Здесь прогресс переносится кодом доступа:</div>' +
+        '<div class="prof-hint">' +
+          (info.local
+            ? 'Аккаунт хранится в этом устройстве и открывается сам.'
+            : 'Прогресс хранится в аккаунте.<br>На другом устройстве войдите этим же ником.') +
+        '</div>' +
         (info.code ? '<div class="prof-code">' + esc(info.code) + '</div>' : '') +
-        '<div class="prof-hint">В Telegram аккаунт привязывается автоматически.</div>' +
+        '<button class="mini-btn wide" id="logout-btn">ВЫЙТИ ИЗ АККАУНТА</button>' +
       '</div>';
   } else {
+    const tgButton = info.tg ? '' :
+      '<a class="big-btn small wide tg-login" href="https://t.me/ashen_summon_bot" target="_blank" rel="noopener">' +
+        '✈️ ВОЙТИ ЧЕРЕЗ TELEGRAM</a>' +
+      '<div class="auth-orl"><span>или по нику</span></div>';
     html =
       '<div class="prof">' +
+        tgButton +
         '<div class="auth-tabs">' +
           '<button class="auth-tab active" data-auth="in">ВХОД</button>' +
           '<button class="auth-tab" data-auth="up">РЕГИСТРАЦИЯ</button>' +
@@ -3205,6 +3310,15 @@ function openProfile(){
   enter($('#up-pass2'), $('#up-btn'));
 
   // Telegram: связать с аккаунтом по нику
+  const logoutBtn = $('#logout-btn');
+  if(logoutBtn){
+    logoutBtn.addEventListener('click', () => {
+      logoutBtn.disabled = true;
+      say('ВЫХОЖУ…', false);
+      window.ACCOUNT.logout().then(() => { save(); setTimeout(() => { hideModal(); location.reload(); }, 400); });
+    });
+  }
+
   const tgToggle = $('#tg-toggle');
   if(tgToggle){
     tgToggle.addEventListener('click', () => {

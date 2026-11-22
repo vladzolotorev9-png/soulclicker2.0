@@ -509,8 +509,10 @@ main{
   display:block; text-align:center; text-decoration:none; margin:2px 0 4px;
   background:linear-gradient(180deg,#4aa3df,#2f7fbf);
   color:#06121c; border:1px solid #7fc4ea; letter-spacing:.1em;
+  cursor:pointer; width:100%;
 }
 .tg-login:hover{background:linear-gradient(180deg,#5cb2ec,#368ccd);}
+.tg-hint{margin-bottom:2px;}
 .auth-orl{
   display:flex; align-items:center; gap:8px; margin:8px 0 6px;
   font-size:8px; color:#6b6278; letter-spacing:.16em; text-transform:uppercase;
@@ -3210,13 +3212,25 @@ function openProfile(){
         '<button class="mini-btn wide" id="logout-btn">ВЫЙТИ ИЗ АККАУНТА</button>' +
       '</div>';
   } else {
-    const tgButton = info.tg ? '' :
-      '<a class="big-btn small wide tg-login" href="https://t.me/ashen_summon_bot" target="_blank" rel="noopener">' +
-        '✈️ ВОЙТИ ЧЕРЕЗ TELEGRAM</a>' +
-      '<div class="auth-orl"><span>или по нику</span></div>';
+    // Мы внутри оболочки Telegram, но подписи нет — значит открыли ссылку
+    // в браузере Telegram, а не как Mini App. Подскажем правильный путь.
+    let tgShell = false;
+    try{
+      const w = window.Telegram && window.Telegram.WebApp;
+      tgShell = !!(w && w.platform && w.platform !== 'unknown');
+    }catch(e){ tgShell = false; }
+
+    const tgBlock = info.tg ? '' : (tgShell
+      ? '<div class="prof-hint">Вы открыли игру в браузере Telegram.<br>' +
+        'Чтобы вход был автоматическим, закройте эту страницу и нажмите<br>' +
+        '<b>«Играть»</b> внизу чата с ботом.</div>'
+      : '<button class="big-btn small wide tg-login" id="tg-login-btn">✈️ ВОЙТИ ЧЕРЕЗ TELEGRAM</button>' +
+        '<div class="prof-hint tg-hint">Откроется Telegram — там вход автоматический,<br>пароль не нужен.</div>' +
+        '<div class="auth-orl"><span>или по нику</span></div>');
+
     html =
       '<div class="prof">' +
-        tgButton +
+        tgBlock +
         '<div class="auth-tabs">' +
           '<button class="auth-tab active" data-auth="in">ВХОД</button>' +
           '<button class="auth-tab" data-auth="up">РЕГИСТРАЦИЯ</button>' +
@@ -3310,6 +3324,25 @@ function openProfile(){
   enter($('#up-pass2'), $('#up-btn'));
 
   // Telegram: связать с аккаунтом по нику
+  const tgLoginBtn = $('#tg-login-btn');
+  if(tgLoginBtn){
+    tgLoginBtn.addEventListener('click', () => {
+      const url = 'https://t.me/ashen_summon_bot/app';
+      say('ОТКРЫВАЮ TELEGRAM…', false);
+      try{
+        const opened = window.open(url, '_self');
+        if(!opened) window.location.href = url;
+      }catch(e){
+        window.location.href = url;
+      }
+      setTimeout(() => {
+        if(!document.hidden){
+          say('ЕСЛИ TELEGRAM НЕ ОТКРЫЛСЯ — НАЙДИТЕ БОТА @ashen_summon_bot', true);
+        }
+      }, 1800);
+    });
+  }
+
   const logoutBtn = $('#logout-btn');
   if(logoutBtn){
     logoutBtn.addEventListener('click', () => {

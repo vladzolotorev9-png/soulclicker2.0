@@ -575,6 +575,11 @@ main{
 .prof-debug{font-size:8px; color:#7a6f8a; letter-spacing:.06em; margin:0 0 6px; text-align:center;}
 
 
+.big-code{font-size:15px; letter-spacing:.28em; padding:10px 6px; color:#ffe9b8;}
+.mono{font-family:Consolas,monospace; color:#ffd35c; letter-spacing:.06em;}
+.mini-btn.wide{display:block; width:100%; margin:4px 0; text-align:center;}
+
+
 </style>
 </head>
 <body>
@@ -3271,12 +3276,17 @@ function openProfile(){
 
     const pendingTg = (window.ACCOUNT && window.ACCOUNT.tgPending) ? window.ACCOUNT.tgPending() : null;
     const waitBlock = pendingTg
-      ? '<div class="auth-msg">ЖДЁМ ПОДТВЕРЖДЕНИЯ В БОТЕ…</div>' +
-        '<a class="big-btn small wide tg-login" id="tg-open-bot" href="https://t.me/ashen_summon_bot?start=login_' +
-          pendingTg + '">✈️ ОТКРЫТЬ БОТА И ВОЙТИ</a>' +
-        '<div class="prof-code">' + esc(pendingTg) + '</div>' +
-        '<div class="prof-hint">Нажмите кнопку — откроется бот, войдёт сам.<br>' +
-          'Или отправьте боту вручную: <b>/login ' + esc(pendingTg) + '</b></div>' +
+      ? '<div class="prof-row"><span>ШАГ 1</span><b>КОД</b></div>' +
+        '<div class="prof-code big-code" id="tg-code">' + esc(pendingTg) + '</div>' +
+        '<button class="mini-btn wide" id="tg-copy">СКОПИРОВАТЬ КОД</button>' +
+        '<div class="prof-hint">' +
+          '<b>2.</b> Закройте игру (крестик сверху) и отправьте код в чат бота:<br>' +
+          '<span class="mono">/login ' + esc(pendingTg) + '</span><br>' +
+          '<b>3.</b> Вернитесь в игру — она войдёт сама.' +
+        '</div>' +
+        '<a class="mini-btn wide" id="tg-open-bot" href="https://t.me/ashen_summon_bot?start=login_' +
+          esc(pendingTg) + '">ОТКРЫТЬ БОТА (если ссылка работает)</a>' +
+        '<div class="auth-msg" id="tg-status">ЖДЁМ ПОДТВЕРЖДЕНИЯ…</div>' +
         '<button class="mini-btn wide" id="tg-cancel">ОТМЕНА</button>'
       : '';
 
@@ -3405,16 +3415,46 @@ function openProfile(){
 
   // Ждём подтверждения от бота и входим сами
   const token = (window.ACCOUNT && window.ACCOUNT.tgPending) ? window.ACCOUNT.tgPending() : null;
+  const tgStatus = $('#tg-status');
+  const sayTg = (text, bad) => {
+    if(!tgStatus) return;
+    tgStatus.textContent = text;
+    tgStatus.className = 'auth-msg' + (bad ? ' bad' : '');
+  };
+
+  const copyBtn = $('#tg-copy');
+  if(copyBtn){
+    copyBtn.addEventListener('click', () => {
+      const code = token || '';
+      const done = () => sayTg('КОД СКОПИРОВАН — ОТПРАВЬТЕ БОТУ', false);
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(code).then(done).catch(() => sayTg('КОД: ' + code, false));
+      }else{
+        sayTg('КОД: ' + code, false);
+      }
+    });
+  }
+
   if(token && !byTelegram){
     let tries = 0;
+    let offline = 0;
     const timer = setInterval(() => {
       tries++;
       if(!msg || !document.body.contains(msg)){ clearInterval(timer); return; }
-      if(tries > 80){ clearInterval(timer); say('КОД УСТАРЕЛ — ПОПРОБУЙТЕ СНОВА', true); return; }
+      if(tries > 120){ clearInterval(timer); sayTg('КОД УСТАРЕЛ — ОТКРОЙТЕ ПРОФИЛЬ ЗАНОВО', true); return; }
       window.ACCOUNT.tgPoll(token).then(r => {
         if(r.done){
           clearInterval(timer);
           finish('ВОШЁЛ ЧЕРЕЗ TELEGRAM · ' + (r.player.name || ''));
+          return;
+        }
+        if(r.status === 'offline'){
+          offline++;
+          sayTg('НЕТ СВЯЗИ С СЕРВЕРОМ (' + offline + ') — ЖДУ', true);
+        }else if(r.status === 'unavailable'){
+          sayTg('СЕРВЕР НЕ ХРАНИТ КОДЫ — ОБНОВИТЕ ВОРКЕР', true);
+        }else{
+          sayTg('ЖДЁМ ПОДТВЕРЖДЕНИЯ… ' + tries * 2 + ' С', false);
         }
       });
     }, 2500);

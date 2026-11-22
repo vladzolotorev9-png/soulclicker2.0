@@ -1338,6 +1338,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
+window.BUILD_STAMP = '1795387840';
 
 /* ============================================================
    Один вход в игру.
@@ -4480,6 +4481,11 @@ function openProfile(){
           '<button class="big-btn small wide" id="tg-btn">ВОЙТИ И СВЯЗАТЬ</button>' +
         '</div>' +
         '<div class="auth-msg" id="auth-msg"></div>' +
+        '<div class="auth-orl"><span>или по коду доступа</span></div>' +
+        '<div class="auth-form" id="claim-form">' +
+          '<input id="claim-code" placeholder="КОД (XXXX-XXXX)" autocomplete="off" maxlength="9">' +
+          '<button class="mini-btn wide" id="claim-btn">ВОЙТИ ПО КОДУ</button>' +
+        '</div>' +
       '</div>';
   } else if(byLogin){
     html =
@@ -4507,7 +4513,8 @@ function openProfile(){
     const tgUa = /Telegram/i.test(ua);
     const inShell = tgSdk || tgUa;
 
-    const diag = '<div class="prof-debug">TELEGRAM: SDK ' + (tgSdk ? 'да' : 'нет') +
+    const buildTag = window.BUILD_STAMP ? ('СБОРКА ' + String(window.BUILD_STAMP).slice(-5) + ' · ') : '';
+    const diag = '<div class="prof-debug">' + buildTag + 'TELEGRAM: SDK ' + (tgSdk ? 'да' : 'нет') +
       ' · подпись ' + tgSig + ' · браузер TG ' + (tgUa ? 'да' : 'нет') + '</div>';
 
     const pendingTg = (window.ACCOUNT && window.ACCOUNT.tgPending) ? window.ACCOUNT.tgPending() : null;
@@ -4561,7 +4568,12 @@ function openProfile(){
           '<button class="big-btn small wide" id="up-btn">СОЗДАТЬ АККАУНТ</button>' +
         '</div>' +
         '<div class="auth-msg" id="auth-msg"></div>' +
-        (info.code
+        '<div class="auth-orl"><span>или по коду доступа</span></div>' +
+        '<div class="auth-form" id="claim-form">' +
+          '<input id="claim-code" placeholder="КОД (XXXX-XXXX)" autocomplete="off" maxlength="9">' +
+          '<button class="mini-btn wide" id="claim-btn">ВОЙТИ ПО КОДУ</button>' +
+        '</div>' +
+                (info.code
           ? '<div class="prof-hint">Или перенесите текущий прогресс по коду:</div>' +
             '<div class="prof-code">' + esc(info.code) + '</div>'
           : '') +
@@ -4638,6 +4650,21 @@ function openProfile(){
   enter($('#up-pass2'), $('#up-btn'));
 
   // Telegram: связать с аккаунтом по нику
+  const claimBtn = $('#claim-btn');
+  if(claimBtn){
+    claimBtn.addEventListener('click', () => {
+      const field = $('#claim-code');
+      const code = field ? field.value : '';
+      claimBtn.disabled = true;
+      say('ПРОВЕРЯЮ КОД…', false);
+      window.ACCOUNT.claim(code).then(r => {
+        claimBtn.disabled = false;
+        if(r.ok) finish('ВОШЁЛ ПО КОДУ · ' + ((r.player && r.player.name) || ''));
+        else say(r.error || 'КОД НЕ ПОДОШЁЛ', true);
+      });
+    });
+  }
+
   const restoreBtn = $('#restore-acc');
   if(restoreBtn){
     restoreBtn.addEventListener('click', () => {

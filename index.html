@@ -1901,6 +1901,42 @@ function signin(login, password){
     .catch(() => localSignin(login, password));
 }
 
+/* ---------- вход через Telegram (подтверждение в боте) ---------- */
+const TG_KEY = 'ashen-tg-login';
+const TG_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function tgPending(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(TG_KEY) || 'null');
+    if(!raw || !raw.token) return null;
+    if(Date.now() - raw.at > 15 * 60000){ localStorage.removeItem(TG_KEY); return null; }
+    return raw.token;
+  }catch(e){ return null; }
+}
+function tgStart(){
+  let token = '';
+  for(let i = 0; i < 8; i++) token += TG_ALPHABET[Math.floor(Math.random() * TG_ALPHABET.length)];
+  try{ localStorage.setItem(TG_KEY, JSON.stringify({ token, at: Date.now() })); }catch(e){}
+  return token;
+}
+function tgCancel(){
+  try{ localStorage.removeItem(TG_KEY); }catch(e){}
+}
+function tgPoll(token){
+  return request('/login', { token })
+    .then(r => {
+      if(r.ok && r.data && r.data.status === 'ok' && r.data.player){
+        try{ localStorage.removeItem(TG_KEY); }catch(e){}
+        me = r.data.player;
+        status = 'cloud';
+        store();
+        return { done:true, player: me };
+      }
+      return { done:false, status: (r.data && r.data.status) || 'waiting' };
+    })
+    .catch(() => ({ done:false, status:'offline' }));
+}
+
 function logout(){
   const book = localBook();
   book.current = null;
@@ -1929,6 +1965,10 @@ window.ACCOUNT = {
   signin,
   logout,
   localMode,
+  tgStart,
+  tgPending,
+  tgCancel,
+  tgPoll,
   bind: bindCreds,
   info(){ return Object.assign({ tg: inTelegram(), status, local: localMode() }, me || {}); },
   hasAccount(){ return !!me; },
@@ -3229,13 +3269,26 @@ function openProfile(){
     const diag = '<div class="prof-debug">TELEGRAM: SDK ' + (tgSdk ? 'да' : 'нет') +
       ' · подпись ' + tgSig + ' · браузер TG ' + (tgUa ? 'да' : 'нет') + '</div>';
 
-    const tgBlock = info.tg ? '' : (inShell
-      ? '<div class="prof-row"><span>TELEGRAM</span><b>БЕЗ ПОДПИСИ</b></div>' +
-        '<div class="prof-hint">Игра открыта внутри Telegram, но Telegram не передал<br>' +
-        'данные профиля. Вход возможен по нику — он сохранится на этом устройстве.</div>'
-      : '<button class="big-btn small wide tg-login" id="tg-login-btn">✈️ ВОЙТИ ЧЕРЕЗ TELEGRAM</button>' +
-        '<div class="prof-hint tg-hint">Откроется Telegram — там вход автоматический,<br>пароль не нужен.</div>' +
-        '<div class="auth-orl"><span>или по нику</span></div>');
+    const pendingTg = (window.ACCOUNT && window.ACCOUNT.tgPending) ? window.ACCOUNT.tgPending() : null;
+    const waitBlock = pendingTg
+      ? '<div class="auth-msg">ЖДЁМ ПОДТВЕРЖДЕНИЯ В БОТЕ…</div>' +
+        '<a class="big-btn small wide tg-login" id="tg-open-bot" href="https://t.me/ashen_summon_bot?start=login_' +
+          pendingTg + '">✈️ ОТКРЫТЬ БОТА И ВОЙТИ</a>' +
+        '<div class="prof-code">' + esc(pendingTg) + '</div>' +
+        '<div class="prof-hint">Нажмите кнопку — откроется бот, войдёт сам.<br>' +
+          'Или отправьте боту вручную: <b>/login ' + esc(pendingTg) + '</b></div>' +
+        '<button class="mini-btn wide" id="tg-cancel">ОТМЕНА</button>'
+      : '';
+
+    const tgBlock = info.tg ? '' : (pendingTg
+      ? waitBlock
+      : (inShell
+        ? '<div class="prof-row"><span>TELEGRAM</span><b>БЕЗ ПОДПИСИ</b></div>' +
+          '<div class="prof-hint">Telegram не передал данные профиля.<br>' +
+          'Войдите по нику — он сохранится на этом устройстве.</div>'
+        : '<button class="big-btn small wide tg-login" id="tg-login-btn">✈️ ВОЙТИ ЧЕРЕЗ TELEGRAM</button>' +
+          '<div class="prof-hint tg-hint">Откроется бот — он подтвердит вход,<br>и игра зайдёт в ваш аккаунт.</div>' +
+          '<div class="auth-orl"><span>или по нику</span></div>'));
 
     html =
       '<div class="prof">' +
@@ -3337,20 +3390,34 @@ function openProfile(){
   const tgLoginBtn = $('#tg-login-btn');
   if(tgLoginBtn){
     tgLoginBtn.addEventListener('click', () => {
-      const url = 'https://t.me/ashen_summon_bot/app';
-      say('ОТКРЫВАЮ TELEGRAM…', false);
-      try{
-        const opened = window.open(url, '_self');
-        if(!opened) window.location.href = url;
-      }catch(e){
-        window.location.href = url;
-      }
-      setTimeout(() => {
-        if(!document.hidden){
-          say('ЕСЛИ TELEGRAM НЕ ОТКРЫЛСЯ — НАЙДИТЕ БОТА @ashen_summon_bot', true);
-        }
-      }, 1800);
+      try{ window.ACCOUNT.tgStart(); }catch(e){}
+      openProfile();      // перерисуется в режим ожидания подтверждения
     });
+  }
+
+  const tgCancelBtn = $('#tg-cancel');
+  if(tgCancelBtn){
+    tgCancelBtn.addEventListener('click', () => {
+      try{ window.ACCOUNT.tgCancel(); }catch(e){}
+      openProfile();
+    });
+  }
+
+  // Ждём подтверждения от бота и входим сами
+  const token = (window.ACCOUNT && window.ACCOUNT.tgPending) ? window.ACCOUNT.tgPending() : null;
+  if(token && !byTelegram){
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries++;
+      if(!msg || !document.body.contains(msg)){ clearInterval(timer); return; }
+      if(tries > 80){ clearInterval(timer); say('КОД УСТАРЕЛ — ПОПРОБУЙТЕ СНОВА', true); return; }
+      window.ACCOUNT.tgPoll(token).then(r => {
+        if(r.done){
+          clearInterval(timer);
+          finish('ВОШЁЛ ЧЕРЕЗ TELEGRAM · ' + (r.player.name || ''));
+        }
+      });
+    }, 2500);
   }
 
   const logoutBtn = $('#logout-btn');

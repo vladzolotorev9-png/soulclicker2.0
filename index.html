@@ -1338,7 +1338,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795388893';
+window.BUILD_STAMP = '1795389651';
 
 /* ============================================================
    Один вход в игру.
@@ -4453,6 +4453,31 @@ function openProfile(){
     (info.pid.indexOf('u:') === 0 || !!info.login);
   const byTelegram = !!info.tg || byTgAccount;
   const tgViaBot = byTgAccount && !info.tg;
+  // Понимаем, где мы: внутри Telegram (SDK или его браузер) или в обычном браузере
+  let tgSdk = false, tgSig = 0;
+  try{
+    const w = window.Telegram && window.Telegram.WebApp;
+    tgSdk = !!w;
+    tgSig = (w && typeof w.initData === 'string') ? w.initData.length : 0;
+  }catch(e){ tgSdk = false; }
+  const ua = (navigator.userAgent || '');
+  const tgUa = /Telegram/i.test(ua);
+  const inShell = tgSdk || tgUa;
+
+  const buildTag = window.BUILD_STAMP ? ('СБОРКА ' + String(window.BUILD_STAMP).slice(-5) + ' · ') : '';
+  const storageInfo = (() => {
+    try{
+      const names = [];
+      for(let i = 0; i < localStorage.length; i++) names.push(localStorage.key(i));
+      const hasAcc = !!localStorage.getItem('ashen-account-v1');
+      const hasLast = !!localStorage.getItem('ashen-last-account');
+      return 'ХРАНИЛИЩЕ: ' + names.length + ' ЗАП. · АККАУНТ ' + (hasAcc ? 'ЕСТЬ' : 'НЕТ') +
+             ' · ПОСЛЕДНИЙ ' + (hasLast ? 'ЕСТЬ' : 'НЕТ');
+    }catch(e){ return 'ХРАНИЛИЩЕ НЕДОСТУПНО'; }
+  })();
+  const diag = '<div class="prof-debug">' + buildTag + 'TELEGRAM: SDK ' + (tgSdk ? 'да' : 'нет') +
+    ' · подпись ' + tgSig + ' · браузер TG ' + (tgUa ? 'да' : 'нет') + '</div>';
+
   let html = '';
 
   // Блок прогресса: видно, что накоплено и сохраняется ли это
@@ -4516,30 +4541,29 @@ function openProfile(){
         (info.code ? '<div class="prof-code">' + esc(info.code) + '</div>' : '') +
         '<button class="mini-btn wide" id="logout-btn">ВЫЙТИ ИЗ АККАУНТА</button>' +
       '</div>';
+  } else if(info.pid && !byLogin && !byTelegram){
+    // Аккаунт есть, но это гость: показываем его и даём задать ник
+    html =
+      '<div class="prof">' +
+        diag +
+        '<div class="prof-debug">' + storageInfo + '</div>' +
+        '<div class="prof-row"><span>ВХОД</span><b>ГОСТЬ</b></div>' +
+        progressBlock +
+        (info.code
+          ? '<div class="prof-hint">Код доступа — по нему аккаунт переносится<br>на другое устройство:</div>' +
+            '<div class="prof-code">' + esc(info.code) + '</div>'
+          : '') +
+        '<div class="auth-orl"><span>задать ник</span></div>' +
+        '<div class="auth-form">' +
+          '<input id="guest-login" placeholder="НИК (3–20 символов)" autocomplete="username" maxlength="20">' +
+          '<input id="guest-pass" type="password" placeholder="ПАРОЛЬ (от 4 символов)" autocomplete="new-password" maxlength="72">' +
+          '<button class="mini-btn wide" id="guest-bind">СОХРАНИТЬ НИК И ПАРОЛЬ</button>' +
+        '</div>' +
+        '<div class="auth-msg" id="auth-msg"></div>' +
+        '<div class="prof-hint">Ник нужен, чтобы входить без кода:<br>по нему вы попадёте в этот же аккаунт.</div>' +
+      '</div>';
   } else {
-    // Понимаем, где мы: внутри Telegram (SDK или его браузер) или в обычном браузере
-    let tgSdk = false, tgSig = 0;
-    try{
-      const w = window.Telegram && window.Telegram.WebApp;
-      tgSdk = !!w;
-      tgSig = (w && typeof w.initData === 'string') ? w.initData.length : 0;
-    }catch(e){ tgSdk = false; }
-    const ua = (navigator.userAgent || '');
-    const tgUa = /Telegram/i.test(ua);
-    const inShell = tgSdk || tgUa;
 
-    const buildTag = window.BUILD_STAMP ? ('СБОРКА ' + String(window.BUILD_STAMP).slice(-5) + ' · ') : '';
-    const storageInfo = (() => {
-      try{
-        const names = [];
-        for(let i = 0; i < localStorage.length; i++) names.push(localStorage.key(i));
-        const hasAcc = !!localStorage.getItem('ashen-account-v1');
-        const hasLast = !!localStorage.getItem('ashen-last-account');
-        return 'ХРАНИЛИЩЕ: ' + names.length + ' ЗАП. · АККАУНТ ' + (hasAcc ? 'ЕСТЬ' : 'НЕТ') +
-               ' · ПОСЛЕДНИЙ ' + (hasLast ? 'ЕСТЬ' : 'НЕТ');
-      }catch(e){ return 'ХРАНИЛИЩЕ НЕДОСТУПНО'; }
-    })();
-    const diag = '<div class="prof-debug">' + buildTag + 'TELEGRAM: SDK ' + (tgSdk ? 'да' : 'нет') +
       ' · подпись ' + tgSig + ' · браузер TG ' + (tgUa ? 'да' : 'нет') + '</div>';
 
     const pendingTg = (window.ACCOUNT && window.ACCOUNT.tgPending) ? window.ACCOUNT.tgPending() : null;
@@ -4676,6 +4700,22 @@ function openProfile(){
   enter($('#up-pass2'), $('#up-btn'));
 
   // Telegram: связать с аккаунтом по нику
+  const guestBind = $('#guest-bind');
+  if(guestBind){
+    guestBind.addEventListener('click', () => {
+      const login = ($('#guest-login') || {}).value || '';
+      const pass = ($('#guest-pass') || {}).value || '';
+      if(!login.trim() || !pass){ say('ВВЕДИТЕ НИК И ПАРОЛЬ', true); return; }
+      guestBind.disabled = true;
+      say('СОХРАНЯЮ…', false);
+      window.ACCOUNT.bind(login.trim(), pass).then(r => {
+        guestBind.disabled = false;
+        if(r.ok) finish('НИК СОХРАНЁН · ' + login.trim());
+        else say(r.error || 'НЕ ПОЛУЧИЛОСЬ', true);
+      });
+    });
+  }
+
   const claimBtn = $('#claim-btn');
   if(claimBtn){
     claimBtn.addEventListener('click', () => {

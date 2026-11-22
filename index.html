@@ -1690,9 +1690,17 @@ function init(){
     return;
   }
 
-  // На статическом сайте сервера нет: аккаунт живёт в устройстве
-  // и восстанавливается сам, без сети и без повторного ввода пароля
+  // На статическом сайте сервера нет: аккаунт живёт в устройстве.
+  // Сначала берём уже сохранённый профиль (например, вход через бота),
+  // и только потом — локальный ник.
   if(localMode()){
+    const stored = readStored();
+    if(stored && stored.pid){
+      me = stored;
+      status = 'off';
+      store();
+      return;
+    }
     const acc = localCurrent();
     if(acc) applyLocal(acc);
     return;
@@ -3215,7 +3223,11 @@ function openProfile(){
   }
   const info = window.ACCOUNT.info();
   const byLogin = typeof info.pid === 'string' && info.pid.indexOf('u:') === 0;
-  const byTelegram = !!info.tg;
+  // Аккаунт Telegram бывает двух видов: с подписью (SDK) и подтверждённый
+  // через бота (pid вида tg:...). Второй тоже считается входом через Telegram.
+  const byTgAccount = typeof info.pid === 'string' && info.pid.indexOf('tg:') === 0;
+  const byTelegram = !!info.tg || byTgAccount;
+  const tgViaBot = byTgAccount && !info.tg;
   let html = '';
 
   if(byTelegram){
@@ -3234,9 +3246,12 @@ function openProfile(){
         '<div class="prof-row"><span>ВХОД</span><b>ЧЕРЕЗ TELEGRAM</b></div>' +
         '<div class="prof-row"><span>ИГРОК</span><b>' + esc(info.name || 'СТРАЖ') + '</b></div>' +
         (tgNick ? '<div class="prof-row"><span>НИК</span><b>' + esc(tgNick) + '</b></div>' : '') +
-        '<div class="prof-hint">' + (tgNick
-          ? 'Войти с компьютера можно этим ником и паролем —<br>прогресс и там и тут один.'
-          : 'Пароль не нужен: аккаунт привязан к Telegram,<br>прогресс открывается на любом устройстве.') + '</div>' +
+        '<div class="prof-hint">' + (tgViaBot
+          ? 'Вход подтверждён через бота — аккаунт привязан<br>к вашему Telegram и открывается сам.'
+          : (tgNick
+            ? 'Войти с компьютера можно этим ником и паролем —<br>прогресс и там и тут один.'
+            : 'Пароль не нужен: аккаунт привязан к Telegram,<br>прогресс открывается на любом устройстве.')) + '</div>' +
+        (info.code ? '<div class="prof-code">' + esc(info.code) + '</div>' : '') +
         createBlock +
         '<button class="mini-btn wide" id="tg-toggle">У МЕНЯ УЖЕ ЕСТЬ НИК</button>' +
         '<div class="auth-form hidden" id="tg-form">' +

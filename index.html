@@ -572,6 +572,9 @@ main{
 .mini-btn.wide{width:100%; padding:8px 10px; font-size:8.5px; letter-spacing:.1em; margin:6px 0 4px;}
 
 
+.prof-debug{font-size:7.5px; color:#4e4658; letter-spacing:.06em; margin-top:6px;}
+
+
 </style>
 </head>
 <body>
@@ -3212,18 +3215,24 @@ function openProfile(){
         '<button class="mini-btn wide" id="logout-btn">ВЫЙТИ ИЗ АККАУНТА</button>' +
       '</div>';
   } else {
-    // Мы внутри оболочки Telegram, но подписи нет — значит открыли ссылку
-    // в браузере Telegram, а не как Mini App. Подскажем правильный путь.
-    let tgShell = false;
+    // Понимаем, где мы: внутри Telegram (SDK или его браузер) или в обычном браузере
+    let tgSdk = false, tgSig = 0;
     try{
       const w = window.Telegram && window.Telegram.WebApp;
-      tgShell = !!(w && w.platform && w.platform !== 'unknown');
-    }catch(e){ tgShell = false; }
+      tgSdk = !!w;
+      tgSig = (w && typeof w.initData === 'string') ? w.initData.length : 0;
+    }catch(e){ tgSdk = false; }
+    const ua = (navigator.userAgent || '');
+    const tgUa = /Telegram/i.test(ua);
+    const inShell = tgSdk || tgUa;
 
-    const tgBlock = info.tg ? '' : (tgShell
-      ? '<div class="prof-hint">Вы открыли игру в браузере Telegram.<br>' +
-        'Чтобы вход был автоматическим, закройте эту страницу и нажмите<br>' +
-        '<b>«Играть»</b> внизу чата с ботом.</div>'
+    const diag = '<div class="prof-hint prof-debug">SDK: ' + (tgSdk ? 'да' : 'нет') +
+      ' · подпись: ' + tgSig + ' · TG-UA: ' + (tgUa ? 'да' : 'нет') + '</div>';
+
+    const tgBlock = info.tg ? '' : (inShell
+      ? '<div class="prof-row"><span>TELEGRAM</span><b>БЕЗ ПОДПИСИ</b></div>' +
+        '<div class="prof-hint">Игра открыта внутри Telegram, но Telegram не передал<br>' +
+        'данные профиля. Вход возможен по нику — он сохранится на этом устройстве.</div>'
       : '<button class="big-btn small wide tg-login" id="tg-login-btn">✈️ ВОЙТИ ЧЕРЕЗ TELEGRAM</button>' +
         '<div class="prof-hint tg-hint">Откроется Telegram — там вход автоматический,<br>пароль не нужен.</div>' +
         '<div class="auth-orl"><span>или по нику</span></div>');

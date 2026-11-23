@@ -1193,6 +1193,11 @@ button:focus-visible, a:focus-visible{
 .forge .mini-btn{flex:1 1 auto;}
 .forge-hint{flex:1 1 100%; font-size:7px; color:#6b5f80; letter-spacing:.06em;}
 
+/* ===== обязательная регистрация ===== */
+#modal.gated #modal-ok,
+#modal.gated #modal-cancel{display:none;}
+.prof-hint.accent{color:#ffd35c;}
+
 </style>
 </head>
 <body>
@@ -1338,7 +1343,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795389651';
+window.BUILD_STAMP = '1795467869';
 
 /* ============================================================
    Один вход в игру.
@@ -1903,9 +1908,15 @@ function shadeCanvas(c){
       else if (dark === 2) factor = 0.84;
       else if (dark === 3) factor = 0.94;
 
-      out[i]     = Math.min(255, d[i]     * factor + (lit <= 1 ? 14 : 0));
+      // объём: верх спрайта светлее, низ уходит в тень
+      const vy = h > 1 ? y / (h - 1) : 0;
+      factor *= 1.06 - vy * 0.14;
+
+      // тени уводим в холод, блики — в тепло
+      const isShade = factor < 0.98;
+      out[i]     = Math.min(255, d[i]     * factor + (lit <= 1 ? 14 : 0) - (isShade ? 2 : 0));
       out[i + 1] = Math.min(255, d[i + 1] * factor + (lit <= 1 ? 8 : 0));
-      out[i + 2] = Math.min(255, d[i + 2] * factor + (lit <= 1 ? 4 : 0));
+      out[i + 2] = Math.min(255, d[i + 2] * factor + (lit <= 1 ? 4 : 0) + (isShade ? 8 : 0));
     }
   }
   img.data.set(out);
@@ -3461,6 +3472,7 @@ let T = 0, shakeAmp = 0, flashWhite = 0, flashRed = 0, buff = 0, stun = 0;
 let offlineGain = 0;   // души, накопленные слугами, пока игра была закрыта
 let combo = 0, comboTimer = 0, spawnTimer = 0, hitStop = 0;
 let bagFilter = 'all', bagSort = 'rarity';   // фильтр и порядок в сумке
+let authGate = false;   // пока true — из окна регистрации не выйти
 const cd = { q:0, e:0 };
 const CD_MAX = { q:18, e:45 };
 let hpFill, hpText, enemyName, bossTag, waveBadge, zoneName, buffBadge, comboBadge, heroHpEl;
@@ -4429,9 +4441,13 @@ function showModal(title, text, okLabel, cb, cancelLabel){
   $('#modal-ok').textContent = okLabel || 'ДА';
   $('#modal-cancel').textContent = cancelLabel || 'ОТМЕНА';
   modalCb = cb || null;
+  $('#modal').classList.toggle('gated', authGate);
   $('#modal').classList.remove('hidden');
 }
-function hideModal(){ $('#modal').classList.add('hidden'); }
+function hideModal(){
+  if(authGate) return;   // пока не зарегистрировался — окно не закрывается
+  $('#modal').classList.add('hidden');
+}
 
 /* ---------- профиль и облако ---------- */
 function esc(text){
@@ -4542,29 +4558,27 @@ function openProfile(){
         '<button class="mini-btn wide" id="logout-btn">ВЫЙТИ ИЗ АККАУНТА</button>' +
       '</div>';
   } else if(info.pid && !byLogin && !byTelegram){
-    // Аккаунт есть, но это гость: показываем его и даём задать ник
+    // Гостевой прогресс есть, но аккаунта нет — просим зарегистрироваться.
+    // Ник привязывается к тому же pid, поэтому прогресс не теряется.
     html =
       '<div class="prof">' +
         diag +
         '<div class="prof-debug">' + storageInfo + '</div>' +
-        '<div class="prof-row"><span>ВХОД</span><b>ГОСТЬ</b></div>' +
+        '<div class="prof-row"><span>АККАУНТ</span><b>НУЖНА РЕГИСТРАЦИЯ</b></div>' +
         progressBlock +
         (info.code
-          ? '<div class="prof-hint">Код доступа — по нему аккаунт переносится<br>на другое устройство:</div>' +
+          ? '<div class="prof-hint">Код вашего прогресса:</div>' +
             '<div class="prof-code">' + esc(info.code) + '</div>'
           : '') +
-        '<div class="auth-orl"><span>задать ник</span></div>' +
+        '<div class="prof-hint accent">Задайте ник и пароль — прогресс сохранится.</div>' +
         '<div class="auth-form">' +
-          '<input id="guest-login" placeholder="НИК (3–20 символов)" autocomplete="username" maxlength="20">' +
-          '<input id="guest-pass" type="password" placeholder="ПАРОЛЬ (от 4 символов)" autocomplete="new-password" maxlength="72">' +
-          '<button class="mini-btn wide" id="guest-bind">СОХРАНИТЬ НИК И ПАРОЛЬ</button>' +
+          '<input id="acc-login" placeholder="НИК (3–20 символов)" autocomplete="username" maxlength="20">' +
+          '<input id="acc-pass" type="password" placeholder="ПАРОЛЬ (от 4 символов)" autocomplete="new-password" maxlength="72">' +
+          '<button class="big-btn small wide" id="acc-up">ЗАРЕГИСТРИРОВАТЬСЯ</button>' +
         '</div>' +
         '<div class="auth-msg" id="auth-msg"></div>' +
-        '<div class="prof-hint">Ник нужен, чтобы входить без кода:<br>по нему вы попадёте в этот же аккаунт.</div>' +
       '</div>';
   } else {
-
-      ' · подпись ' + tgSig + ' · браузер TG ' + (tgUa ? 'да' : 'нет') + '</div>';
 
     const pendingTg = (window.ACCOUNT && window.ACCOUNT.tgPending) ? window.ACCOUNT.tgPending() : null;
     const lastAcc = (window.ACCOUNT && window.ACCOUNT.lastAccount) ? window.ACCOUNT.lastAccount() : null;
@@ -4602,20 +4616,12 @@ function openProfile(){
         '<div class="prof-debug">' + storageInfo + '</div>' +
         backBlock +
         tgBlock +
-        '<div class="auth-tabs">' +
-          '<button class="auth-tab active" data-auth="in">ВХОД</button>' +
-          '<button class="auth-tab" data-auth="up">РЕГИСТРАЦИЯ</button>' +
-        '</div>' +
-        '<div class="auth-form" id="auth-in">' +
-          '<input id="in-login" placeholder="НИК" autocomplete="username" maxlength="20">' +
-          '<input id="in-pass" type="password" placeholder="ПАРОЛЬ" autocomplete="current-password" maxlength="72">' +
-          '<button class="big-btn small wide" id="in-btn">ВОЙТИ</button>' +
-        '</div>' +
-        '<div class="auth-form hidden" id="auth-up">' +
-          '<input id="up-login" placeholder="НИК (3–20 символов)" autocomplete="username" maxlength="20">' +
-          '<input id="up-pass" type="password" placeholder="ПАРОЛЬ (от 4 символов)" autocomplete="new-password" maxlength="72">' +
-          '<input id="up-pass2" type="password" placeholder="ПОВТОРИТЕ ПАРОЛЬ" autocomplete="new-password" maxlength="72">' +
-          '<button class="big-btn small wide" id="up-btn">СОЗДАТЬ АККАУНТ</button>' +
+        '<div class="prof-row"><span>АККАУНТ</span><b>НИК И ПАРОЛЬ</b></div>' +
+        '<div class="auth-form">' +
+          '<input id="acc-login" placeholder="НИК" autocomplete="username" maxlength="20">' +
+          '<input id="acc-pass" type="password" placeholder="ПАРОЛЬ" autocomplete="current-password" maxlength="72">' +
+          '<button class="big-btn small wide" id="acc-in">ВОЙТИ</button>' +
+          '<button class="mini-btn wide" id="acc-up">СОЗДАТЬ АККАУНТ</button>' +
         '</div>' +
         '<div class="auth-msg" id="auth-msg"></div>' +
         '<div class="auth-orl"><span>или по коду доступа</span></div>' +
@@ -4623,10 +4629,6 @@ function openProfile(){
           '<input id="claim-code" placeholder="КОД (XXXX-XXXX)" autocomplete="off" maxlength="9">' +
           '<button class="mini-btn wide" id="claim-btn">ВОЙТИ ПО КОДУ</button>' +
         '</div>' +
-                (info.code
-          ? '<div class="prof-hint">Или перенесите текущий прогресс по коду:</div>' +
-            '<div class="prof-code">' + esc(info.code) + '</div>'
-          : '') +
       '</div>';
   }
 
@@ -4700,6 +4702,44 @@ function openProfile(){
   enter($('#up-pass2'), $('#up-btn'));
 
   // Telegram: связать с аккаунтом по нику
+  const accIn = $('#acc-in');
+  const accUp = $('#acc-up');
+  const accLogin = () => (($('#acc-login') || {}).value || '').trim();
+  const accPass = () => (($('#acc-pass') || {}).value || '');
+
+  if(accIn){
+    accIn.addEventListener('click', () => {
+      if(!accLogin() || !accPass()){ say('ВВЕДИТЕ НИК И ПАРОЛЬ', true); return; }
+      accIn.disabled = true;
+      say('ВХОЖУ…', false);
+      window.ACCOUNT.signin(accLogin(), accPass()).then(r => {
+        accIn.disabled = false;
+        if(r.ok) finish('ВОШЁЛ · ' + (r.player.login || accLogin()));
+        else say(r.error || 'НЕ ПОЛУЧИЛОСЬ', true);
+      });
+    });
+  }
+
+  if(accUp){
+    accUp.addEventListener('click', () => {
+      if(!accLogin() || !accPass()){ say('ВВЕДИТЕ НИК И ПАРОЛЬ', true); return; }
+      accUp.disabled = true;
+      say('СОЗДАЮ АККАУНТ…', false);
+      const isGuest = window.ACCOUNT.hasAccount() && !window.ACCOUNT.info().login;
+      const call = isGuest ? window.ACCOUNT.bind(accLogin(), accPass()) : window.ACCOUNT.signup(accLogin(), accPass());
+      call.then(r => {
+        accUp.disabled = false;
+        if(r.ok) finish('АККАУНТ СОЗДАН · ' + (r.player.login || accLogin()));
+        else say(r.error || 'НЕ ПОЛУЧИЛОСЬ', true);
+      });
+    });
+  }
+
+  [['#acc-login', accIn], ['#acc-pass', accUp]].forEach(([sel, btn]) => {
+    const el = $(sel);
+    if(el && btn) el.addEventListener('keydown', ev => { if(ev.key === 'Enter') btn.click(); });
+  });
+
   const guestBind = $('#guest-bind');
   if(guestBind){
     guestBind.addEventListener('click', () => {
@@ -5109,12 +5149,13 @@ function drawWeapon(c, hx, hy){
   // след удара
   if(hero.swing > 0.05){
     const p = 1 - hero.swing/(hero.swingLen||0.2);
-    const a = Math.max(0, 1-Math.abs(p-0.45)*2.6) * 0.75;
+    const comboBoost = Math.min(1, combo / 12);
+    const a = Math.min(1, Math.max(0, 1-Math.abs(p-0.45)*2.6) * 0.75 + comboBoost * 0.22);
     c.globalAlpha = a;
     // след удара окрашен в цвет редкости оружия
     const wcol = gearColor('weapon') || (kind === 'bolt' ? '#c9a6ff' : '#fff4d0');
     c.strokeStyle = wcol;
-    c.lineWidth = kind === 'cleave' ? 2 : 1;
+    c.lineWidth = (kind === 'cleave' ? 2 : 1) + (combo >= 10 ? 1 : 0);
     c.beginPath();
     c.arc(hx, hy, kind === 'cleave' ? 20 : 15, -1.7, 1.0);
     c.stroke();
@@ -5132,7 +5173,7 @@ function drawEnemy(c){
   const breathe = Math.sin(T*1.8 + e.seed)*1.6;
   const rise = e.intro > 0 ? (e.intro / 0.95) * (spr.h * 0.85) : 0;
   const y = FLOOR - spr.h + breathe - (e.dying > 0 ? dying*14 : 0) + rise;
-  const x = e.x + e.knock;
+  const x = e.x + e.knock - (e.lunge > 0 ? Math.round(7 * (e.lunge / 0.22)) : 0);
 
   c.globalAlpha = alpha * 0.42;
   c.fillStyle = '#000';
@@ -5446,8 +5487,10 @@ function update(dt){
   // атака врага: замах, затем удар
   if(enemy && enemy.dying <= 0 && stun <= 0){
     if(enemy.atkWind > 0) enemy.atkWind = Math.max(0, enemy.atkWind - dt);
+    if(enemy.lunge > 0) enemy.lunge = Math.max(0, enemy.lunge - dt);
     if(enemy.pending && enemy.atkWind <= 0){
       enemy.pending = false;
+      enemy.lunge = 0.22;
       heroHurt(Math.max(1, maxHp() * (enemy.boss ? BAL.enemyHitBoss : BAL.enemyHitMob) * (1 - armorRed())));
       enemy.atkTimer = enemy.boss ? rnd(4.2, 5.8) : rnd(5.5, 8);
     }
@@ -5564,7 +5607,15 @@ function bind(){
   const cur = makeCursor();
   if(cur) canvas.style.cursor = 'url(' + cur + ') 16 16, crosshair';
 
-  $('#btn-start').addEventListener('click', startGame);
+  $('#btn-start').addEventListener('click', () => {
+    startGame();
+    const info = window.ACCOUNT ? window.ACCOUNT.info() : {};
+    const registered = !!info.login || !!info.tg || (typeof info.pid === 'string' && info.pid.indexOf('tg:') === 0);
+    if(!registered){
+      authGate = true;
+      openProfile();
+    }
+  });
 
   canvas.addEventListener('pointerdown', (ev) => {
     ev.preventDefault();

@@ -1343,7 +1343,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795467869';
+window.BUILD_STAMP = '1795473652';
 
 /* ============================================================
    Один вход в игру.
@@ -2189,7 +2189,97 @@ const CATALOG = [
     mods:{ dmg:2.00, souls:1.60, crit:1.00 } },
   { id:'r_black_bone', slot:'ring', rarity:'mythic',
     name:'Обруч из кости первого мертвеца', desc:'Сделан из пальца, что не отпустил.',
-    mods:{ dmg:1.65, crit:1.15, cdmg:0.95 } }
+    mods:{ dmg:1.65, crit:1.15, cdmg:0.95 } },
+
+  /* ============================================================
+     ВТОРАЯ ВОЛНА КАТАЛОГА · 22 предмета
+
+     Добавлены так, чтобы в каждом слоте на каждой редкости было
+     чем торговать, а сила (itemScore) не выходила за полосу своей
+     редкости: обычные остаются слабыми, легендарные и мифические
+     получают необычные сочетания полей (здоровье + урон у амулета,
+     души + крит у кольца).
+     ============================================================ */
+
+  /* ---------------- ОРУЖИЕ +7 ---------------- */
+  { id:'w_sword_grave', slot:'weapon', weapon:'sword', rarity:'uncommon',
+    name:'Клинок с могильной гравировкой', desc:'Имена стёрлись, а проклятие осталось.',
+    mods:{ dmg:1.18, crit:0.35 } },
+  { id:'w_sword_oath', slot:'weapon', weapon:'sword', rarity:'rare',
+    name:'Клинок нарушенной клятвы', desc:'Клялся защищать — теперь режет тех, кто верил.',
+    mods:{ dmg:1.45, crit:0.70, cdmg:0.70 } },
+  { id:'w_axe_idol', slot:'weapon', weapon:'axe', rarity:'epic',
+    name:'Топор, которым рубили идола', desc:'Идол не кричал — он улыбался.',
+    mods:{ dmg:1.22, crit:0.42, cdmg:0.65 } },
+  { id:'w_mace_bell', slot:'weapon', weapon:'mace', rarity:'epic',
+    name:'Булава, что пила колокол', desc:'Звон застрял в ней и просит выхода.',
+    mods:{ dmg:1.30, crit:0.50, cdmg:0.90 } },
+  { id:'w_axe_winter', slot:'weapon', weapon:'axe', rarity:'legendary',
+    name:'Топор последней зимы', desc:'Им рубили не дрова, а тепло.',
+    mods:{ dmg:1.40, crit:0.75, cdmg:0.90 } },
+  { id:'w_mace_sky', slot:'weapon', weapon:'mace', rarity:'mythic',
+    name:'Молот, что держит небо', desc:'Убери его — и небо ляжет тебе на плечи.',
+    mods:{ dmg:1.90, crit:1.10, cdmg:1.00 } },
+  { id:'w_staff_blindeye', slot:'weapon', weapon:'staff', rarity:'mythic',
+    name:'Посох бездонного ока', desc:'Око закрыто, но всё равно смотрит.',
+    mods:{ dmg:1.80, souls:1.90, crit:1.40 } },
+
+  /* ---------------- БРОНЯ +5 ---------------- */
+  { id:'a_ringmail_wedding', slot:'armor', rarity:'common',
+    name:'Кольчуга из обручальных колец', desc:'Каждое кольцо обещало вечность — и не сдержало.',
+    mods:{ hp:0.95, arm:0.55, dps:0.25 } },
+  { id:'a_flayed', slot:'armor', rarity:'uncommon',
+    name:'Кираса из кожи повешенного', desc:'Он до сих пор чувствует верёвку на шее.',
+    mods:{ hp:1.15, arm:0.90, dps:0.45 } },
+  { id:'a_gallows_bark', slot:'armor', rarity:'rare',
+    name:'Панцирь из коры висельника', desc:'Дерево выросло из того, что под ним закопали.',
+    mods:{ hp:1.40, arm:1.15, dps:0.90 } },
+  { id:'a_black_ice', slot:'armor', rarity:'epic',
+    name:'Латы из чёрного льда', desc:'Холод внутри теплее, чем снаружи.',
+    mods:{ hp:1.70, arm:1.50, dps:1.00 } },
+  { id:'a_last_prayer', slot:'armor', rarity:'legendary',
+    name:'Доспех последней молитвы', desc:'Молитва была короткой: «не сейчас».',
+    mods:{ hp:1.95, arm:1.75, dps:1.05 } },
+
+  /* ---------------- АМУЛЕТЫ +5 ---------------- */
+  { id:'m_grave_button', slot:'amulet', rarity:'common',
+    name:'Медальон из пуговицы мертвеца', desc:'Пуговица расстегнулась сама.',
+    mods:{ hp:0.35, crit:0.30, souls:0.50 } },
+  { id:'m_dried_blood', slot:'amulet', rarity:'uncommon',
+    name:'Подвеска из высохшей крови', desc:'Кровь была не её.',
+    mods:{ souls:0.90, crit:0.50, cdmg:0.45 } },
+  { id:'m_foreign_sleep', slot:'amulet', rarity:'rare',
+    name:'Медальон чужого сна', desc:'Спишь — и видишь его сны.',
+    mods:{ souls:1.05, crit:0.70, cdmg:0.60 } },
+  { id:'m_drowned_rib', slot:'amulet', rarity:'epic',
+    name:'Амулет из ребра утопленницы', desc:'Вода в её лёгких так и не высохла.',
+    mods:{ hp:0.55, dmg:0.85, souls:0.70 } },
+  { id:'m_step_counter', slot:'amulet', rarity:'legendary',
+    name:'Амулет, что считает шаги', desc:'Он уже знает, сколько тебе осталось.',
+    mods:{ crit:1.50, cdmg:1.50, souls:1.35 } },
+  { id:'m_unblinking_eye', slot:'amulet', rarity:'mythic',
+    name:'Око, что не мигает', desc:'Оно не спит, потому что спишь ты.',
+    mods:{ hp:0.90, crit:1.45, souls:1.30 } },
+
+  /* ---------------- КОЛЬЦА +5 ---------------- */
+  { id:'r_coffin_nail', slot:'ring', rarity:'common',
+    name:'Кольцо из гвоздя гроба', desc:'Гвоздь вытащили изнутри.',
+    mods:{ dmg:0.20, souls:0.50, dps:0.45 } },
+  { id:'r_ash_warden', slot:'ring', rarity:'uncommon',
+    name:'Кольцо сторожа праха', desc:'Он сторожил пепел, пока сам не стал им.',
+    mods:{ dmg:0.45, souls:0.60, crit:0.25 } },
+  { id:'r_warm_dead', slot:'ring', rarity:'rare',
+    name:'Кольцо, что греет мертвеца', desc:'Мёртвому тепло, а тебе — нет.',
+    mods:{ souls:0.75, crit:0.72, dmg:0.35 } },
+  { id:'r_foreign_pulse', slot:'ring', rarity:'epic',
+    name:'Кольцо чужого пульса', desc:'Стучит в такт с кем-то, кого уже нет.',
+    mods:{ souls:1.30, crit:1.00, dmg:0.80, hp:0.25 } },
+  { id:'r_door_holder', slot:'ring', rarity:'legendary',
+    name:'Кольцо, что держит дверь', desc:'Дверь заперта с той стороны.',
+    mods:{ dmg:1.80, souls:1.40, crit:1.00, hp:0.40 } },
+  { id:'r_world_tears', slot:'ring', rarity:'mythic',
+    name:'Обруч из слёз мира', desc:'Кто-то плакал обо всём сразу.',
+    mods:{ dmg:1.35, souls:1.80, crit:1.25, hp:0.50 } }
 ];
 
 const CATALOG_BY_SLOT = { weapon:[], armor:[], amulet:[], ring1:[], ring2:[] };
@@ -4707,16 +4797,32 @@ function openProfile(){
   const accLogin = () => (($('#acc-login') || {}).value || '').trim();
   const accPass = () => (($('#acc-pass') || {}).value || '');
 
+  const storageBroken = (() => {
+    try{ localStorage.setItem('__probe_store', '1'); localStorage.removeItem('__probe_store'); return false; }
+    catch(e){ return true; }
+  })();
+  if(storageBroken && !window.STATIC_HOST){
+    say('ХРАНИЛИЩЕ НЕДОСТУПНО — ВКЛЮЧИТЕ COOKIES', true);
+  }
+
   if(accIn){
     accIn.addEventListener('click', () => {
       if(!accLogin() || !accPass()){ say('ВВЕДИТЕ НИК И ПАРОЛЬ', true); return; }
+      if(String(accPass()).length < 4){ say('ПАРОЛЬ: МИНИМУМ 4 СИМВОЛА', true); return; }
       accIn.disabled = true;
       say('ВХОЖУ…', false);
       window.ACCOUNT.signin(accLogin(), accPass()).then(r => {
         accIn.disabled = false;
         if(r.ok) finish('ВОШЁЛ · ' + (r.player.login || accLogin()));
+        else if(/НЕВЕРНЫЙ/i.test(r.error || '')){
+          // возможно, ника ещё нет — пробуем создать сразу
+          window.ACCOUNT.signup(accLogin(), accPass()).then(r2 => {
+            if(r2.ok) finish('АККАУНТ СОЗДАН · ' + (r2.player.login || accLogin()));
+            else say('НЕВЕРНЫЙ ПАРОЛЬ ИЛИ НИК', true);
+          }).catch(() => say('НЕВЕРНЫЙ ПАРОЛЬ ИЛИ НИК', true));
+        }
         else say(r.error || 'НЕ ПОЛУЧИЛОСЬ', true);
-      });
+      }).catch(() => { accIn.disabled = false; say('ОШИБКА ВХОДА — ПОПРОБУЙТЕ ЕЩЁ РАЗ', true); });
     });
   }
 
@@ -4730,7 +4836,9 @@ function openProfile(){
       call.then(r => {
         accUp.disabled = false;
         if(r.ok) finish('АККАУНТ СОЗДАН · ' + (r.player.login || accLogin()));
-        else say(r.error || 'НЕ ПОЛУЧИЛОСЬ', true);
+        else if(/ЗАНЯТ/i.test(r.error || '')){
+          say('ТАКОЙ НИК УЖЕ ЕСТЬ — НАЖМИТЕ «ВОЙТИ»', true);
+        } else say(r.error || 'НЕ ПОЛУЧИЛОСЬ', true);
       });
     });
   }

@@ -1350,7 +1350,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795519288';
+window.BUILD_STAMP = '1795520628';
 
 /* ============================================================
    Один вход в игру.
@@ -2945,11 +2945,12 @@ function bindLocalCreds(login, password){
 
 function bindCreds(login, password){
   if(localMode()){
-    return request('/bind', { login, password })
+    return request('/bind', { login, password, pid: (me && me.pid) || '', name: (me && me.name) || '' })
       .then(r => {
         if(r.ok && r.data.player){
           me = r.data.player;
-          if(!me.login && me.name) me.login = me.name;
+          me.login = login;              // после привязки показываем выбранный ник
+          me.name = login;
           status = 'cloud';
           store();
           return { ok:true, player: me };

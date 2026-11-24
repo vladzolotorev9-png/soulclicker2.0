@@ -1216,6 +1216,42 @@ button:focus-visible, a:focus-visible{
   border:1px solid #4a3a18;
 }
 
+/* полоса пути до босса */
+.wavebar{height:3px; margin:4px 0 0; background:#120d1b; border:1px solid #241d33;}
+.wavefill{
+  height:100%; width:0%;
+  background:linear-gradient(90deg,#7a4bd6,#d9a53b);
+  box-shadow:0 0 8px rgba(217,165,59,.45);
+  transition:width .3s ease;
+}
+
+/* всплеск счётчика душ */
+.hud-val.pop{animation:soulPop .35s ease;}
+@keyframes soulPop{
+  0%{transform:scale(1);}
+  40%{transform:scale(1.22); color:#ffe9a8;}
+  100%{transform:scale(1);}
+}
+
+/* предупреждение о близком боссе */
+#wave-badge.boss-soon{
+  color:#ff8b93;
+  animation:bossSoon 1.1s ease-in-out infinite;
+}
+@keyframes bossSoon{
+  0%,100%{text-shadow:0 0 0 rgba(255,80,90,0);}
+  50%{text-shadow:0 0 10px rgba(255,80,90,.9);}
+}
+
+/* кнопка ритуала готова */
+#ritual-btn.ready{
+  animation:ritualReady 1.6s ease-in-out infinite;
+}
+@keyframes ritualReady{
+  0%,100%{box-shadow:0 0 0 rgba(217,165,59,0);}
+  50%{box-shadow:0 0 18px rgba(217,165,59,.55);}
+}
+
 </style>
 </head>
 <body>
@@ -1276,6 +1312,7 @@ button:focus-visible, a:focus-visible{
           <span id="boss-tag" class="boss-tag hidden">БОСС</span>
         </div>
         <div class="hpbar"><div class="hpfill" id="hp-fill"></div><span class="hptext" id="hp-text">9 / 9</span></div>
+        <div class="wavebar"><div class="wavefill" id="wave-fill"></div></div>
       </div>
 
       <div class="canvas-wrap">
@@ -1367,7 +1404,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795525200';
+window.BUILD_STAMP = '1795561167';
 
 /* ============================================================
    Один вход в игру.
@@ -3428,7 +3465,7 @@ const BAL = {
   greedPer: 0.12,
   sealPer: 0.20,
   comboMax: 20, comboStep: 0.15,
-  ritualNeed: 250000,
+  ritualNeed: 60000,
   dropChance: 0.2,
   bagMax: 24,
   heroHp: 100,
@@ -3524,7 +3561,8 @@ const G = () => {
 const invalidateGear = () => { gearCache = null; };
 
 /* ===================== формулы ===================== */
-const sealBonus = () => 1 + S.seals * BAL.sealPer;
+// печати дают затухающий бонус: первые самые ценные, дальше всё слабее
+const sealBonus = () => 1 + BAL.sealPer * S.seals / (1 + S.seals / 40);
 const soulMult  = () => (1 + S.up.greed * BAL.greedPer + G().souls/100) * sealBonus() * eventMult('souls');
 const bladeMul  = () => Math.pow(BAL.bladePerLvl, S.up.blade);
 const clickDmg  = () => (BAL.baseClick + S.up.blade) * bladeMul() * sealBonus() * (1 + G().dmg/100) * weaponMult();
@@ -3624,7 +3662,11 @@ function waveInfo(wave){
 }
 const unitCost = u => Math.ceil(u.base * Math.pow(u.growth, S.units[u.id]));
 const upCost = u => Math.ceil(u.base * Math.pow(u.growth, S.up[u.id]));
-const ritualGain = () => Math.floor(Math.sqrt(S.total / BAL.ritualNeed));
+const ritualGain = () => {
+  const raw = Math.sqrt(Math.max(0, S.total) / BAL.ritualNeed);
+  const scaled = raw / (1 + S.seals / 25);        // каждая следующая печать дороже
+  return Math.max(0, Math.min(40, Math.floor(scaled)));   // не больше 40 за раз
+};
 
 /* ===================== звук ===================== */
 const SFX = {
@@ -4023,6 +4065,13 @@ function updatePlate(){
   hpText.textContent = fmt(hp) + ' / ' + fmt(enemy.maxHp);
   const toBoss = (BAL.zoneLen - (S.wave % BAL.zoneLen)) % BAL.zoneLen;
   waveBadge.textContent = 'ВОЛНА ' + S.wave + (enemy.boss ? ' · БОСС' : ' · ДО БОССА ' + toBoss);
+  const wb = $('#wave-badge');
+  if(wb) wb.classList.toggle('boss-soon', !enemy.boss && toBoss <= 2);
+  const wf = $('#wave-fill');
+  if(wf){
+    const done = BAL.zoneLen - toBoss;
+    wf.style.width = Math.round(clamp(done / BAL.zoneLen, 0, 1) * 100) + '%';
+  }
   const zn = ZONES[Math.floor((S.wave-1)/BAL.zoneLen) % ZONES.length].name;
   zoneName.textContent = ev.t > 0
     ? zn + ' · ' + ev.def.name + ' ' + Math.ceil(ev.t) + 'с'
@@ -4512,6 +4561,7 @@ function load(){
     ITEMS.resetUid(mx + 1);
     invalidateGear();
     S.hp = clamp(S.hp || maxHp(), 1, maxHp());
+    if(S.seals > 1000) S.seals = 1000;   // разовая нормализация старых сейвов
     applyOffline(o.ts);
     loadedFromDisk = true;
     return true;
@@ -4673,8 +4723,10 @@ function buildUI(){
       '<h3>РИТУАЛ БЕЗДНЫ</h3>' +
       '<p>Принеси в жертву всё, что собрал.<br>Бездна запомнит тебя — и оставит печать.</p>' +
       '<div class="gain">+<span id="ritual-gain">0</span> <span id="ritual-word">печатей</span></div>' +
-      '<p>Каждая печать: <b style="color:#d9a53b">+20%</b> к урону и душам.<br>' +
-      'У тебя печатей: <b style="color:#b98cf0" id="ritual-have">0</b></p>' +
+      '<p>Печати усиливают урон и души, но <b style="color:#d9a53b">с затуханием</b>:<br>' +
+      'сейчас множитель <b style="color:#d9a53b" id="ritual-bonus">×1,0</b>, ' +
+      'печатей <b style="color:#b98cf0" id="ritual-have">0</b></p>' +
+      '<p id="ritual-next" style="color:#8a7fa0"></p>' +
       '<p id="ritual-need" style="color:#6f6580"></p>' +
       '<button class="big-btn wide" id="ritual-btn">СОВЕРШИТЬ РИТУАЛ</button>' +
     '</div>';
@@ -4753,7 +4805,17 @@ function refreshUI(){
   });
   const ud = $('#units-dps');
   if(ud) ud.textContent = fmt(dpsValue());
-  $('#souls-val').textContent = fmt(S.souls);
+  const svEl = $('#souls-val');
+  if(svEl){
+    const prev = parseFloat(svEl.getAttribute('data-v') || '0');
+    if(S.souls > prev){
+      svEl.classList.remove('pop');
+      void svEl.offsetWidth;
+      svEl.classList.add('pop');
+    }
+    svEl.setAttribute('data-v', String(S.souls));
+    svEl.textContent = fmt(S.souls);
+  }
   $('#click-val').textContent = fmt(clickDmg() * comboMul());
   $('#dps-val').textContent = fmt(dpsValue());
   $('#seals-val').textContent = S.seals;
@@ -4778,10 +4840,18 @@ function refreshRitual(){
   gg.textContent = g;
   if(ww) ww.textContent = plural(g, 'печать', 'печати', 'печатей');
   hh.textContent = S.seals;
+  const rb = $('#ritual-bonus');
+  if(rb) rb.textContent = '×' + sealBonus().toFixed(2).replace('.', ',');
+  const rn = $('#ritual-next');
+  if(rn){
+    const next = 1 + BAL.sealPer * (S.seals + 1) / (1 + (S.seals + 1) / 40);
+    rn.textContent = 'Следующая печать: +' + Math.max(0, (next - sealBonus()) * 100).toFixed(1) + '%';
+  }
   if(g < 1){
     nn.textContent = 'НУЖНО ВСЕГО ДУШ: ' + fmt(BAL.ritualNeed) + ' · СЕЙЧАС: ' + fmt(S.total);
   } else nn.textContent = '';
   btn.disabled = g < 1;
+  btn.classList.toggle('ready', g >= 1);
 }
 
 function refreshSkills(){

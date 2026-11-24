@@ -1350,7 +1350,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795520628';
+window.BUILD_STAMP = '1795521790';
 
 /* ============================================================
    Один вход в игру.
@@ -2776,7 +2776,12 @@ function pull(){
     }
     if(!r.ok){ status = 'error'; store(); return false; }
     status = 'cloud'; store();
-    if(r.data.player) me = r.data.player;
+    if(r.data.player){
+      const prev = me;
+      me = r.data.player;
+      if(!me.login && prev && prev.login) me.login = prev.login;
+      if(!me.name && prev && prev.name) me.name = prev.name;
+    }
     store();
     const remote = r.data.save;
     const remoteTs = r.data.ts || 0;
@@ -2863,6 +2868,7 @@ function claim(code){
     .then(r => {
       if(!r.ok || !r.data.player) return { ok:false, error: (r.data && r.data.error) || 'НЕ НАЙДЕНО' };
       me = r.data.player;
+      clearOut();
       status = 'cloud';
       store();
       return pull().then(() => ({ ok:true, player: me }));
@@ -2887,6 +2893,7 @@ function signup(login, password){
         if(r.ok && r.data.player){
           me = r.data.player;
           if(!me.login && me.name) me.login = me.name;
+          clearOut();
           status = 'cloud';
           store();
           return { ok:true, player: me };
@@ -2951,6 +2958,7 @@ function bindCreds(login, password){
           me = r.data.player;
           me.login = login;              // после привязки показываем выбранный ник
           me.name = login;
+          clearOut();
           status = 'cloud';
           store();
           return { ok:true, player: me };
@@ -2964,6 +2972,7 @@ function bindCreds(login, password){
     .then(r => {
       if(!r.ok || !r.data.player) return { ok:false, error: r.data.error || 'НЕ ПОЛУЧИЛОСЬ' };
       me = r.data.player;
+      clearOut();
       status = 'cloud';
       store();
       return { ok:true, player: me };
@@ -2979,6 +2988,7 @@ function signin(login, password){
         if(r.ok && r.data.player){
           me = r.data.player;
           if(!me.login && me.name) me.login = me.name;
+          clearOut();
           status = 'cloud';
           store();
           return pull().then(() => ({ ok:true, player: me }));
@@ -2992,6 +3002,7 @@ function signin(login, password){
     .then(r => {
       if(!r.ok || !r.data.player) return { ok:false, error: r.data.error || 'НЕВЕРНЫЙ НИК ИЛИ ПАРОЛЬ' };
       me = r.data.player;
+      clearOut();
       status = 'cloud';
       store();
       return pull().then(() => ({ ok:true, player: me }));
@@ -4725,8 +4736,10 @@ function openProfile(){
           '<input id="acc-login" placeholder="НИК (3–20 символов)" autocomplete="username" maxlength="20">' +
           '<input id="acc-pass" type="password" placeholder="ПАРОЛЬ (от 4 символов)" autocomplete="new-password" maxlength="72">' +
           '<button class="big-btn small wide" id="acc-up">ЗАРЕГИСТРИРОВАТЬСЯ</button>' +
+          '<button class="mini-btn wide" id="acc-in">ВОЙТИ В АККАУНТ</button>' +
         '</div>' +
         '<div class="auth-msg" id="auth-msg"></div>' +
+        '<button class="mini-btn wide" id="refresh-game">ОБНОВИТЬ ВЕРСИЮ ИГРЫ</button>' +
       '</div>';
   } else {
 

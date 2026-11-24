@@ -1204,6 +1204,18 @@ button:focus-visible, a:focus-visible{
   margin:0 0 6px; text-align:center;
 }
 
+/* комплект и уникальное свойство в карточке */
+.card-set{font-size:8px; letter-spacing:.1em; color:#c8a24a; margin:4px 0 2px;}
+.card-unique{font-size:8px; color:#c9a6ff; margin:2px 0 4px; line-height:1.3;}
+
+/* активный комплект в сумке */
+.set-info{
+  font-size:8px; letter-spacing:.08em; color:#c8a24a;
+  padding:4px 6px; margin:2px 0 6px;
+  background:linear-gradient(180deg, rgba(255,180,60,.10), rgba(255,150,60,.02));
+  border:1px solid #4a3a18;
+}
+
 </style>
 </head>
 <body>
@@ -1283,6 +1295,11 @@ button:focus-visible, a:focus-visible{
           <span class="kb">E</span>
           <span class="skill-txt"><b>КРИК ДУШ</b><i>×2 урон и DPS, 12с</i></span>
         </button>
+        <button class="skill" id="sk-r" data-key="r">
+          <span class="cd" id="cd-r"></span>
+          <span class="kb">R</span>
+          <span class="skill-txt"><b>ПЕПЕЛЬНЫЙ ВЗРЫВ</b><i>урон и лечение, 45с</i></span>
+        </button>
       </div>
 
       <div class="hint">КЛИКАЙ ПО ВРАГУ &nbsp;·&nbsp; <b>ПРОБЕЛ</b> — УДАР &nbsp;·&nbsp; <b>Q</b> / <b>E</b> — СИЛЫ</div>
@@ -1350,7 +1367,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795522361';
+window.BUILD_STAMP = '1795525200';
 
 /* ============================================================
    Один вход в игру.
@@ -1610,6 +1627,90 @@ const ART = {
       '....owwwo........owwwo....',
       '....oWWWo........oWWWo....',
 ]
+  },
+
+  /* ---------------- УПЫРЬ 26×32 ----------------
+     Сгорбленный, голова выдвинута вперёд-влево (к герою), горб справа-сверху,
+     рёбра прорваны сквозь гнилую плоть, руки свисают ниже колен, кисти — костяные
+     когти. Глаза — две светящиеся точки в тёмных провалах. */
+  ghoul: {
+    rows: [
+      '............oooo..........',
+      '..........ooFFFFoo........',
+      '.........oFFFFFFFFFFo.....',
+      '....oooo.oFFFFFFFFFFFFo...',
+      '...oFFo..oFFFFFFFFFFFFo...',
+      '..oFFFFo.oFFFFFFFFFFFFo...',
+      '.oFkkkkkFoFFFFFFFFFFFFo...',
+      '.oFkekekFoFFFFFFFFFFFFo...',
+      '.oFFkkkFFoFFFFFFFFFFFFo...',
+      '.oFFFFFFFoFFFFFFFFFFo.....',
+      '..owWkwwoFFFFFFFFFFFFo....',
+      '..owwwwoFFFFFFFFFFFFFo....',
+      '...owwoFFFFFFFFFFFFFFo....',
+      '...oFFooFFFFFFFFFFFoFFo...',
+      '..oFFo.oFFFFwwwwFFooFFo...',
+      '..oFFo.oFFFwwwwFFFooFFo...',
+      '..oFFo.oFFwFkkFwFFooFFo...',
+      '..oFFo.oFFRRFFFFRRooFFo...',
+      '..oFFo.oFFFFFkFFFFooFFo...',
+      '..oFFo.oFFRFFFFFFkooFFo...',
+      '..oFFo.oFFFFFFFFFFo.oFFo..',
+      '..oFFo..oFFo..oFFo..oFFo..',
+      '..oFFo.oFFo....oFFo.oFFo..',
+      '..oFFo.oFFo....oFFo.oFFo..',
+      '.oWWWooFFo......oFFoWWWo..',
+      '.oWWWooFFo......oFFoWWWo..',
+      '.owwwooFFo......oFFowwwo..',
+      '.owo.oowWo........o.owo...',
+      '..o..o.owWo........o..o...',
+      '.......owWo........owWo...',
+      '.......oXXo........oXXo...',
+      '.......oooo........oooo...',
+    ]
+  },
+
+  /* ---------------- ПАДШИЙ РЫЦАРЬ 26×34 ----------------
+     Шлем с прорезью и светящимися глазами, ржавые латы (L/l по стали),
+     пробитый щит с золотым умбоном и трещиной, в правой руке — воткнутый
+     в землю ржавый меч. */
+  knight: {
+    rows: [
+      '...........oGo............',
+      '..........ogGGo...........',
+      '.........ooSSSSSoo........',
+      '........oSaSSSSSSSao......',
+      '.......oSsSSSSSSSso.......',
+      '.......oSSkkkkkSSo........',
+      '.......oSskEEEksSSo.......',
+      '.......oSSkkkkkSSo........',
+      '.......oSsSSSSSSsSo.......',
+      '........oSsSSSLSSSo.......',
+      '.........oSSSSLSo.........',
+      '...oSLSoSSSSSSSSSSooSLo...',
+      '.osSLSooSSSSSSSSSSoosSLSo.',
+      '.osSSLooSSuuuuuuSSoosSSlo.',
+      '.osSSSooSsuLLLLuSSooSSLo..',
+      '.ooooo.oSsuLGGGuSSo.oSSSo.',
+      'oSSSSSooSsuLLLLuSSo.oSSSo.',
+      'oSLLLSooSsuuuuuuSSo.oFFo..',
+      'oSLGLSooSSSSSSSSSSo.oFFo..',
+      'oSkGkSooSSSSSSSSSSooGGGGGo',
+      'oSLLLSo.oSSSSSSSSo..oaSSo.',
+      '.oSLLSo.oSSSSSSSSo..oaSSo.',
+      '..oSSo..oSSSSSSSSo..oaSSo.',
+      '...oo...oSSGGGSSSo..oaSSo.',
+      '........oSSSSSSSo...oaSSo.',
+      '........oSSSSSSSo...oaSSo.',
+      '.......oSSSo..oSSSo.oaSSo.',
+      '.......oSSSo..oSSSo.oaSSo.',
+      '......oSSSo...oSSSo.oaSSo.',
+      '......oSSSo....oSSSooaSSo.',
+      '......oSSSo....oSSSo.oaso.',
+      '.....oUUSo.....oUUSo..o...',
+      '.....oUUUo.....oUUUo......',
+      '.....oooo.......oooo......',
+    ]
   },
 
   /* ---------------- ПРИЗРАК 22×26 ---------------- */
@@ -2044,6 +2145,14 @@ const STATS = {
    высокой редкости того же уровня всегда сильнее.
 
    В каждом слоте есть предметы всех шести редкостей.
+
+   Необязательные поля записи:
+   setId     — принадлежность комплекту (см. SETS ниже); предметы
+               комплектов не реже редкого уровня;
+   uniqueId  — id уникального эффекта ('lifesteal', 'thorns', 'exec',
+               'souls_on_crit', 'shield'); игра читает его у экземпляра;
+   unique    — короткое описание эффекта для интерфейса.
+   Эти поля переносятся в экземпляр предмета в makeCatalogItem.
    ============================================================ */
 const CATALOG = [
   /* ---------------- ОРУЖИЕ · 12 (по 2 на тип) ---------------- */
@@ -2078,14 +2187,15 @@ const CATALOG = [
   { id:'w_staff_rotstar', slot:'weapon', weapon:'staff', rarity:'common',
     name:'Посох гнилой звезды', desc:'На его конце тлеет мёртвое солнце.',
     mods:{ dmg:1.00, souls:0.40 } },
-  { id:'w_staff_lastword', slot:'weapon', weapon:'staff', rarity:'legendary',
+  { id:'w_staff_lastword', slot:'weapon', weapon:'staff', rarity:'legendary', setId:'bone_cult',
     name:'Посох последнего слова', desc:'Произнеси его — и мир закончится.',
     mods:{ dmg:1.45, souls:1.70, crit:0.70 } },
 
   { id:'w_scythe_reaper', slot:'weapon', weapon:'scythe', rarity:'common',
     name:'Коса жнеца', desc:'Она не различает колосья и людей.',
     mods:{ dmg:1.05, souls:0.35 } },
-  { id:'w_scythe_names', slot:'weapon', weapon:'scythe', rarity:'mythic',
+  { id:'w_scythe_names', slot:'weapon', weapon:'scythe', rarity:'mythic', setId:'abyss',
+    uniqueId:'exec', unique:'Добивание: удар по врагу ниже 10% здоровья казнит его',
     name:'Коса, что жнёт имена', desc:'Забирает не жизнь, а память о ней.',
     mods:{ dmg:1.65, souls:2.00, cdmg:0.95 } },
 
@@ -2122,10 +2232,12 @@ const CATALOG = [
   { id:'a_drowned', slot:'armor', rarity:'epic',
     name:'Броня утопленника', desc:'Вода не захотела её отпускать.',
     mods:{ hp:1.65, arm:1.40 } },
-  { id:'a_last_emperor', slot:'armor', rarity:'legendary',
+  { id:'a_last_emperor', slot:'armor', rarity:'legendary', setId:'ash_guard',
+    uniqueId:'shield', unique:'Щит при старте волны: +8% здоровья в начале каждой волны',
     name:'Латы последнего императора', desc:'Империи нет, а доспех всё держит строй.',
     mods:{ hp:2.00, arm:1.80, dps:1.10 } },
-  { id:'a_abyss_scale', slot:'armor', rarity:'mythic',
+  { id:'a_abyss_scale', slot:'armor', rarity:'mythic', setId:'abyss',
+    uniqueId:'thorns', unique:'Шипы: 6% полученного урона возвращается нападающему',
     name:'Доспех из чешуи бездны', desc:'Чешуя шевелится, когда ты дышишь.',
     mods:{ hp:2.35, arm:2.10, dps:1.45 } },
 
@@ -2154,13 +2266,14 @@ const CATALOG = [
     name:'Талисман голодной звезды', desc:'Светит тем, кого уже съело.',
     mods:{ souls:1.20, crit:0.60, cdmg:0.65 } },
 
-  { id:'m_saint_rib', slot:'amulet', rarity:'epic',
+  { id:'m_saint_rib', slot:'amulet', rarity:'epic', setId:'ash_guard',
     name:'Амулет из ребра святого', desc:'Святость — просто хорошо зажившая рана.',
     mods:{ crit:1.10, cdmg:1.25, souls:0.90 } },
-  { id:'m_mute_bell', slot:'amulet', rarity:'legendary',
+  { id:'m_mute_bell', slot:'amulet', rarity:'legendary', setId:'bone_cult',
     name:'Амулет немого звона', desc:'Он звонит только для мёртвых.',
     mods:{ crit:1.50, cdmg:1.70, souls:1.30 } },
-  { id:'m_ashen_heart', slot:'amulet', rarity:'mythic',
+  { id:'m_ashen_heart', slot:'amulet', rarity:'mythic', setId:'candle_flame',
+    uniqueId:'souls_on_crit', unique:'Души за крит: каждый критический удар даёт +2 души',
     name:'Сердце пепельного призыва', desc:'Бьётся в такт с чем-то под землёй.',
     mods:{ crit:1.75, cdmg:1.95, souls:1.60 } },
 
@@ -2189,13 +2302,14 @@ const CATALOG = [
     name:'Кольцо змеиного века', desc:'Змея съела свой хвост и начала заново.',
     mods:{ dmg:0.90, crit:0.50, souls:0.45 } },
 
-  { id:'r_dead_sun', slot:'ring', rarity:'epic',
+  { id:'r_dead_sun', slot:'ring', rarity:'epic', setId:'abyss',
     name:'Кольцо угасшего солнца', desc:'Носи его — и ночь станет длиннее.',
     mods:{ dmg:1.25, crit:0.75, cdmg:0.75 } },
   { id:'r_names', slot:'ring', rarity:'legendary',
     name:'Кольцо, что помнит имена', desc:'Оно шепчет имя каждого, кто его носил.',
     mods:{ dmg:2.00, souls:1.60, crit:1.00 } },
-  { id:'r_black_bone', slot:'ring', rarity:'mythic',
+  { id:'r_black_bone', slot:'ring', rarity:'mythic', setId:'bone_cult',
+    uniqueId:'lifesteal', unique:'Вампиризм: 3% нанесённого урона возвращается здоровьем',
     name:'Обруч из кости первого мертвеца', desc:'Сделан из пальца, что не отпустил.',
     mods:{ dmg:1.65, crit:1.15, cdmg:0.95 } },
 
@@ -2213,13 +2327,13 @@ const CATALOG = [
   { id:'w_sword_grave', slot:'weapon', weapon:'sword', rarity:'uncommon',
     name:'Клинок с могильной гравировкой', desc:'Имена стёрлись, а проклятие осталось.',
     mods:{ dmg:1.18, crit:0.35 } },
-  { id:'w_sword_oath', slot:'weapon', weapon:'sword', rarity:'rare',
+  { id:'w_sword_oath', slot:'weapon', weapon:'sword', rarity:'rare', setId:'ash_guard',
     name:'Клинок нарушенной клятвы', desc:'Клялся защищать — теперь режет тех, кто верил.',
     mods:{ dmg:1.45, crit:0.70, cdmg:0.70 } },
   { id:'w_axe_idol', slot:'weapon', weapon:'axe', rarity:'epic',
     name:'Топор, которым рубили идола', desc:'Идол не кричал — он улыбался.',
     mods:{ dmg:1.22, crit:0.42, cdmg:0.65 } },
-  { id:'w_mace_bell', slot:'weapon', weapon:'mace', rarity:'epic',
+  { id:'w_mace_bell', slot:'weapon', weapon:'mace', rarity:'epic', setId:'candle_flame',
     name:'Булава, что пила колокол', desc:'Звон застрял в ней и просит выхода.',
     mods:{ dmg:1.30, crit:0.50, cdmg:0.90 } },
   { id:'w_axe_winter', slot:'weapon', weapon:'axe', rarity:'legendary',
@@ -2276,7 +2390,7 @@ const CATALOG = [
   { id:'r_ash_warden', slot:'ring', rarity:'uncommon',
     name:'Кольцо сторожа праха', desc:'Он сторожил пепел, пока сам не стал им.',
     mods:{ dmg:0.45, souls:0.60, crit:0.25 } },
-  { id:'r_warm_dead', slot:'ring', rarity:'rare',
+  { id:'r_warm_dead', slot:'ring', rarity:'rare', setId:'candle_flame',
     name:'Кольцо, что греет мертвеца', desc:'Мёртвому тепло, а тебе — нет.',
     mods:{ souls:0.75, crit:0.72, dmg:0.35 } },
   { id:'r_foreign_pulse', slot:'ring', rarity:'epic',
@@ -2299,6 +2413,137 @@ CATALOG.forEach(e => {
     CATALOG_BY_SLOT[e.slot].push(e);
   }
 });
+
+/* ============================================================
+   КОМПЛЕКТЫ (СЕТЫ)
+
+   Предметы сета помечены полем setId (см. каталог выше). Бонус
+   считается по числу надетых предметов этого сета: 2 — малый,
+   3 и больше — полный. Кольца (ring1/ring2) считаются одним
+   слотом: одна и та же вещь не может дать два предмета сета.
+
+   Числовые поля бонуса — в тех же единицах, что и gearStats:
+   dmg/dps/crit/cdmg/souls/arm — проценты, hp — плоские единицы
+   здоровья (как у брони).
+   ============================================================ */
+const SETS = [
+  { id:'ash_guard',    name:'ПЕПЕЛЬНЫЙ СТРАЖ',
+    small:{ dmg:4, hp:25, arm:3 },
+    full: { dmg:9, hp:60, arm:6, souls:4 } },
+  { id:'bone_cult',    name:'КОСТЯНОЙ КУЛЬТ',
+    small:{ souls:6, cdmg:6 },
+    full: { souls:13, crit:4, cdmg:12 } },
+  { id:'abyss',        name:'БЕЗДНА',
+    small:{ dps:5, dmg:4 },
+    full: { dps:11, dmg:8, arm:4 } },
+  { id:'candle_flame', name:'ПЛАМЯ СВЕЧИ',
+    small:{ dmg:4, souls:5 },
+    full: { dmg:8, souls:11, cdmg:7 } }
+];
+const SET_BY_ID = {};
+SETS.forEach(s => { SET_BY_ID[s.id] = s; });
+
+/* предметы и слоты каждого сета — берём из каталога, чтобы
+   описание сета не разъехалось с реальным содержимым */
+SETS.forEach(s => {
+  s.items = [];
+  s.slots = [];
+  CATALOG.forEach(e => {
+    if(e.setId !== s.id) return;
+    s.items.push(e.id);
+    if(s.slots.indexOf(e.slot) < 0) s.slots.push(e.slot);
+  });
+  s.total = s.items.length;
+});
+
+/* допустимые уникальные эффекты (игра читает item.uniqueId) */
+const UNIQUE_IDS = ['lifesteal', 'thorns', 'exec', 'souls_on_crit', 'shield'];
+
+const BONUS_KEYS = ['dmg', 'dps', 'crit', 'cdmg', 'souls', 'hp', 'arm'];
+const BONUS_LABEL = {
+  dmg:'урона', dps:'урона слуг', crit:'крита',
+  cdmg:'урона крита', souls:'душ', hp:'здоровья', arm:'защиты'
+};
+
+/* короткая строка бонуса для интерфейса: '+9% урона, +60 здоровья' */
+function bonusText(bonus){
+  const parts = [];
+  BONUS_KEYS.forEach(k => {
+    const v = bonus[k];
+    if(!v) return;
+    parts.push(k === 'hp'
+      ? '+' + Math.round(v) + ' ' + BONUS_LABEL[k]
+      : '+' + v + '% ' + BONUS_LABEL[k]);
+  });
+  return parts.join(', ');
+}
+
+function slotGroup(slot){
+  return (slot === 'ring1' || slot === 'ring2') ? 'ring' : slot;
+}
+
+/* сколько предметов каждого сета надето (объект setId -> число) */
+function setPieces(gear){
+  const count = {};
+  if(!gear) return count;
+  const seen = {};
+  for(let i=0;i<SLOT_ORDER.length;i++){
+    const slot = SLOT_ORDER[i];
+    const it = gear[slot];
+    if(!it || !it.setId) continue;
+    const set = SET_BY_ID[it.setId];
+    if(!set) continue;
+    const key = set.id + '|' + slotGroup(slot);
+    if(seen[key]) continue;          // один слот — один предмет сета
+    seen[key] = 1;
+    count[set.id] = (count[set.id] || 0) + 1;
+  }
+  return count;
+}
+
+/* состояние одного сета при заданном числе надетых предметов */
+function setState(set, pieces){
+  const n = Math.max(0, Math.min(pieces || 0, set.total));
+  const src = n >= 3 ? set.full : (n >= 2 ? set.small : null);
+  const res = {
+    id: set.id,
+    name: set.name,
+    pieces: n,
+    total: set.total,
+    active: n >= 2,
+    dmg:0, dps:0, crit:0, cdmg:0, souls:0, hp:0, arm:0,
+    text: src ? bonusText(src) : ''
+  };
+  if(src) BONUS_KEYS.forEach(k => { res[k] = src[k] || 0; });
+  return res;
+}
+
+/* пустое состояние, когда ни один комплектный предмет не надет */
+function emptySetBonus(){
+  return {
+    id:'', name:'', pieces:0, total:0, active:false,
+    dmg:0, dps:0, crit:0, cdmg:0, souls:0, hp:0, arm:0, text:''
+  };
+}
+
+/* бонус надетого комплекта: берём сет, которого больше всего надето.
+   Без сетовых предметов возвращает нулевой бонус с active:false. */
+function setBonus(gear){
+  const count = setPieces(gear);
+  let best = null, bestPieces = 0;
+  SETS.forEach(set => {
+    const n = count[set.id] || 0;
+    if(n > bestPieces){ bestPieces = n; best = set; }
+  });
+  if(!best) return emptySetBonus();
+  return setState(best, bestPieces);
+}
+
+/* состояния всех сетов — для панели снаряжения */
+function setStates(gear){
+  const count = setPieces(gear);
+  return SETS.map(set => setState(set, count[set.id] || 0));
+}
 
 const PREFIX = [
   ['Ржавый', 'Треснувший', 'Грубый', 'Тусклый'],
@@ -2382,6 +2627,11 @@ function makeCatalogItem(entry, slot, ilvl, rar){
     name: entry.name,
     desc: entry.desc
   };
+  if(entry.setId) item.setId = entry.setId;
+  if(entry.uniqueId){
+    item.uniqueId = entry.uniqueId;
+    item.unique = entry.unique || '';
+  }
   addAffixes(item, rar, levelScale(ilvl, rar), Math.max(1, rar.affixes - 2));
   item.score = itemScore(item);
   return item;
@@ -2492,7 +2742,9 @@ function sellPrice(it){
 window.ITEMS = {
   RARITY, RARITY_BY_ID, WEAPONS, WEAPON_BY_ID, SLOTS, SLOT_ORDER, STATS,
   CATALOG, all: CATALOG,
+  SETS, SET_BY_ID, UNIQUE_IDS,
   makeItem, roll, itemScore, statLabel, gearStats, emptyStats, sellPrice,
+  setBonus, setStates, setPieces,
   resetUid: (n) => { NEXT_UID = n || 1; }
 };
 
@@ -3191,17 +3443,19 @@ const MOB_NAME = {
   imp: 'ПЕПЕЛЬНЫЙ БЕС',
   skeleton: 'КОСТЯНОЙ СТРАЖ',
   wraith: 'ГОЛОДНАЯ ТЕНЬ',
-  golem: 'МОГИЛЬНЫЙ ГОЛЕМ'
+  golem: 'МОГИЛЬНЫЙ ГОЛЕМ',
+  ghoul: 'УПЫРЬ',
+  knight: 'ПАДШИЙ РЫЦАРЬ'
 };
 
 const ZONES = [
-  { name:'СКЛЕП ЗАБЫТЫХ', mobs:['imp','skeleton'], bossName:'КОСТЯНОЙ КОРОЛЬ',
+  { name:'СКЛЕП ЗАБЫТЫХ', mobs:['imp','skeleton','ghoul'], bossName:'КОСТЯНОЙ КОРОЛЬ',
     wall0:'#171226', wall1:'#0d0a15', brick:'#221a33', brickHi:'#2b2140', mortar:'#090711',
     floor0:'#151020', floor1:'#0f0b17', glow:'#7a4bd6' },
-  { name:'КОСТЯНЫЕ КАТАКОМБЫ', mobs:['skeleton','wraith'], bossName:'ПОЖИРАТЕЛЬ ДУШ',
+  { name:'КОСТЯНЫЕ КАТАКОМБЫ', mobs:['skeleton','wraith','knight'], bossName:'ПОЖИРАТЕЛЬ ДУШ',
     wall0:'#141a24', wall1:'#0a0e15', brick:'#1d2533', brickHi:'#273244', mortar:'#080b10',
     floor0:'#12161e', floor1:'#0c0f15', glow:'#46d6bd' },
-  { name:'ПЕПЕЛЬНЫЙ АЛТАРЬ', mobs:['wraith','golem'], bossName:'ВЛАДЫКА ПЕПЛА',
+  { name:'ПЕПЕЛЬНЫЙ АЛТАРЬ', mobs:['wraith','golem','ghoul'], bossName:'ВЛАДЫКА ПЕПЛА',
     wall0:'#1e141d', wall1:'#110a11', brick:'#2a1a26', brickHi:'#38232f', mortar:'#0b0609',
     floor0:'#191019', floor1:'#110a11', glow:'#ff7a3c' },
   { name:'БЕЗДНА', mobs:['golem','imp'], bossName:'ХОЗЯИН БЕЗДНЫ',
@@ -3246,12 +3500,32 @@ function freshState(){
 }
 let S = freshState();
 let gearCache = null;
-const G = () => { if(!gearCache) gearCache = ITEMS.gearStats(S.gear); return gearCache; };
+const G = () => {
+  if(!gearCache){
+    gearCache = ITEMS.gearStats(S.gear);
+    // бонусы комплекта (если каталог их поддерживает)
+    try{
+      if(ITEMS.setBonus){
+        const b = ITEMS.setBonus(S.gear);
+        if(b && b.active){
+          for(const k of ['dmg','dps','crit','cdmg','souls','hp','arm']){
+            if(b[k]) gearCache[k] = (gearCache[k] || 0) + b[k];
+          }
+          gearCache.setName = b.name || '';
+          gearCache.setText = b.text || '';
+          gearCache.setPieces = b.pieces || 0;
+          gearCache.setTotal = b.total || 0;
+        }
+      }
+    }catch(e){ /* комплект не должен ломать игру */ }
+  }
+  return gearCache;
+};
 const invalidateGear = () => { gearCache = null; };
 
 /* ===================== формулы ===================== */
 const sealBonus = () => 1 + S.seals * BAL.sealPer;
-const soulMult  = () => (1 + S.up.greed * BAL.greedPer + G().souls/100) * sealBonus();
+const soulMult  = () => (1 + S.up.greed * BAL.greedPer + G().souls/100) * sealBonus() * eventMult('souls');
 const bladeMul  = () => Math.pow(BAL.bladePerLvl, S.up.blade);
 const clickDmg  = () => (BAL.baseClick + S.up.blade) * bladeMul() * sealBonus() * (1 + G().dmg/100) * weaponMult();
 const comboMul  = () => 1 + Math.min(combo, BAL.comboMax) * BAL.comboStep;
@@ -3267,6 +3541,15 @@ function equippedWeapon(){
 }
 
 // цвет редкости надетой вещи — им подсвечиваем героя
+// есть ли надет предмет с уникальным свойством
+function hasUnique(id){
+  for(const k of ['weapon','armor','amulet','ring1','ring2']){
+    const it = S.gear[k];
+    if(it && it.uniqueId === id) return true;
+  }
+  return false;
+}
+
 function gearColor(slot){
   const it = S.gear[slot];
   if(!it) return null;
@@ -3409,6 +3692,10 @@ const SFX = {
   hurt(){ this.noise(0.16, 0.16, 300, 0.7); this.tone(90, 0.18, 'sawtooth', 0.1, 45); },
   skill(){ this.tone(300, 0.22, 'sawtooth', 0.1, 900); this.noise(0.2, 0.12, 2200, 1.6); },
   ritual(){ [110,146,220,293].forEach((f,i)=>setTimeout(()=>this.tone(f,0.5,'sine',0.1), i*140)); },
+  heart(){ this.tone(52, 0.16, 'sine', 0.10, 40); this.noise(0.10, 0.05, 180, 0.9); },
+  bossDown(){ [330, 392, 494, 660].forEach((f,i)=>setTimeout(()=>this.tone(f, 0.5, 'triangle', 0.09), i*110)); },
+  combo(n){ this.tone(520 + n*22, 0.10, 'triangle', 0.07); setTimeout(()=>this.tone(780 + n*22, 0.12, 'triangle', 0.06), 70); },
+  event(){ [440, 554, 660].forEach((f,i)=>setTimeout(()=>this.tone(f, 0.35, 'triangle', 0.09), i*90)); },
   ambient(){
     if(!this.ok()) return;
     const kind = Math.floor(Math.random()*3);
@@ -3431,6 +3718,8 @@ const SFX = {
 const SPR = {};
 function buildSprites(){
   ['hero','imp','skeleton','wraith','golem'].forEach(k => { SPR[k] = makeSprite(ART[k]); });
+  // новые враги (если спрайты нарисованы)
+  ['ghoul','knight'].forEach(k => { if(ART[k]) SPR[k] = makeSprite(ART[k]); });
   for(let i=0;i<BOSS_PAL.length;i++) SPR['boss'+i] = makeSprite(ART.bossHalf, BOSS_PAL[i]);
   if(ART.weapons){
     Object.keys(ART.weapons).forEach(k => { SPR['w_' + k] = makeSprite(ART.weapons[k]); });
@@ -3634,8 +3923,33 @@ let offlineGain = 0;   // души, накопленные слугами, по�
 let combo = 0, comboTimer = 0, spawnTimer = 0, hitStop = 0;
 let bagFilter = 'all', bagSort = 'rarity';   // фильтр и порядок в сумке
 let authGate = false;   // пока true — из окна регистрации не выйти
-const cd = { q:0, e:0 };
-const CD_MAX = { q:18, e:45 };
+
+/* ---------- события: раз в несколько волн на склеп что-то находит ---------- */
+const EVENTS = [
+  { id:'moon',  name:'КРОВАВАЯ ЛУНА',  desc:'души ×2',        dur:25, souls:2 },
+  { id:'tide',  name:'ТЁМНЫЙ ПРИЛИВ',  desc:'дроп ×2',        dur:25, drop:2 },
+  { id:'feast', name:'ПИР ВОРОНОВ',    desc:'лечение и реген', dur:20, heal:true }
+];
+const ev = { id:null, t:0, def:null };
+let nextEventWave = 8;
+let bossBeat = 0, lastComboMark = 0;
+
+function startEvent(){
+  const def = EVENTS[Math.floor(Math.random()*EVENTS.length)];
+  ev.id = def.id; ev.def = def; ev.t = def.dur;
+  if(def.heal){ S.hp = maxHp(); }
+  SFX.event();
+  toast('СОБЫТИЕ · ' + def.name + ' (' + def.desc + ')');
+  updatePlate();
+}
+function eventMult(kind){
+  if(!ev.def || ev.t <= 0) return 1;
+  if(kind === 'souls' && ev.def.souls) return ev.def.souls;
+  if(kind === 'drop' && ev.def.drop) return ev.def.drop;
+  return 1;
+}
+const cd = { q:0, e:0, r:0 };
+const CD_MAX = { q:18, e:45, r:45 };
 let hpFill, hpText, enemyName, bossTag, waveBadge, zoneName, buffBadge, comboBadge, heroHpEl;
 
 /* ===================== шрифт ===================== */
@@ -3691,6 +4005,10 @@ function spawnEnemy(){
     atkTimer: info.boss ? rnd(3.2, 4.6) : rnd(4.5, 7),
     atkWind: 0, pending: false
   };
+  if(!info.boss && hasUnique('shield')){
+    S.hp = Math.min(maxHp(), S.hp + maxHp() * 0.05);   // щит: лечит на новой волне
+    refreshHeroHp();
+  }
   if(info.boss){ SFX.boss(); shakeAmp = 4; toast('БОСС · ' + enemy.name); }
   else if(elite){ SFX.boss(); shakeAmp = 2.5; toast('ЭЛИТНЫЙ ВРАГ · ' + enemy.name); }
   updatePlate();
@@ -3705,7 +4023,10 @@ function updatePlate(){
   hpText.textContent = fmt(hp) + ' / ' + fmt(enemy.maxHp);
   const toBoss = (BAL.zoneLen - (S.wave % BAL.zoneLen)) % BAL.zoneLen;
   waveBadge.textContent = 'ВОЛНА ' + S.wave + (enemy.boss ? ' · БОСС' : ' · ДО БОССА ' + toBoss);
-  zoneName.textContent = ZONES[Math.floor((S.wave-1)/BAL.zoneLen) % ZONES.length].name;
+  const zn = ZONES[Math.floor((S.wave-1)/BAL.zoneLen) % ZONES.length].name;
+  zoneName.textContent = ev.t > 0
+    ? zn + ' · ' + ev.def.name + ' ' + Math.ceil(ev.t) + 'с'
+    : zn;
 }
 
 function addNumber(text, x, y, kind){
@@ -3761,7 +4082,21 @@ function soulBurst(x, y){
 function hitEnemy(dmg, isCrit, opts){
   if(!enemy || enemy.dying > 0) return;
   opts = opts || {};
+
+  // уникальные свойства снаряжения
+  if(!opts.noUnique){
+    if(hasUnique('exec') && enemy.hp / enemy.maxHp < 0.3) dmg *= 1.35;      // добивание
+    if(hasUnique('souls_on_crit') && isCrit){
+      const bonus = Math.ceil(dmg * 0.05);
+      S.souls += bonus; S.total += bonus;
+    }
+  }
+
   enemy.hp -= dmg;
+
+  if(!opts.noUnique && hasUnique('lifesteal')){
+    S.hp = Math.min(maxHp(), S.hp + dmg * 0.03);                            // вампиризм
+  }
   enemy.flash = 0.1;
   enemy.knock = isCrit ? 7 : 4;
   const hx = enemy.x + rnd(-7,7), hy = FLOOR - enemy.spr.h*0.55 + rnd(-8,8);
@@ -3827,6 +4162,8 @@ function killEnemy(){
   shakeAmp = Math.max(shakeAmp, 2.6);
   SFX.kill();
   maybeDrop();
+  if(S.wave >= nextEventWave){ nextEventWave = S.wave + 7; startEvent(); }
+  if(enemy && enemy.boss && SFX.bossDown) SFX.bossDown();
   if(wave % BAL.zoneLen === 0) toast('ЗОНА: ' + ZONES[Math.floor((S.wave-1)/BAL.zoneLen) % ZONES.length].name);
   refreshUI();
   updatePlate();
@@ -3836,7 +4173,7 @@ function killEnemy(){
 /* ---------- лут ---------- */
 function maybeDrop(){
   if(!enemy) return;
-  const chance = enemy.boss ? 1 : BAL.dropChance;
+  const chance = enemy.boss ? 1 : BAL.dropChance * eventMult('drop');
   if(Math.random() > chance) return;
   const count = enemy.boss ? (Math.random() < 0.5 ? 3 : 2) : 1;
   for(let i=0;i<count;i++){
@@ -3926,6 +4263,10 @@ function attack(){
   const w = equippedWeapon();
   const kind = w ? w.atk : 'slash';
   combo = Math.min(combo + 1, BAL.comboMax);
+  if(combo >= 10 && combo % 5 === 0 && combo !== lastComboMark){
+    lastComboMark = combo;
+    SFX.combo(combo);
+  }
   comboTimer = 1.4;
 
   let base = clickDmg() * comboMul() * buffMul();
@@ -3944,6 +4285,7 @@ function attack(){
   hero.swing = kind === 'smash' ? 0.3 : (kind === 'cleave' ? 0.28 : 0.2);
   hero.swingLen = hero.swing;
   hero.lunge = 0.16;
+  hero.impact = 0.12;
   hero.atk = kind;
 
   // пыль из-под ног при замахе
@@ -3964,6 +4306,13 @@ function attack(){
 
 /* ---------- герой: урон ---------- */
 function heroHurt(dmg){
+  // шипы: часть урона возвращается врагу
+  if(hasUnique('thorns') && enemy && enemy.dying <= 0){
+    const back = Math.max(1, dmg * 0.5);
+    enemy.hp -= back;
+    sparks(enemy.x, FLOOR - 24, 6, ['#c9a6ff','#ffffff'], 60);
+    if(enemy.hp <= 0) killEnemy();
+  }
   hero.recoil = 0.22;
   if(stun > 0) return;
   S.hp -= dmg;
@@ -4000,6 +4349,18 @@ function useSkill(k){
     flashWhite = Math.max(flashWhite, 0.2);
     addNumber('x20', VW/2 - 12, 44, 'skill');
     SFX.skill();
+  } else if(k === 'r'){
+    if(!enemy || enemy.dying > 0) return;
+    const dmg = (clickDmg() * 12 + dpsValue() * 14) * buffMul();
+    hitEnemy(dmg, true, { skill:true });
+    S.hp = Math.min(maxHp(), S.hp + maxHp() * 0.25);
+    hero.swing = 0.32; hero.swingLen = 0.32; hero.lunge = 0.22; hero.atk = 'sweep';
+    flashWhite = Math.max(flashWhite, 0.25);
+    shakeAmp = Math.max(shakeAmp, 5);
+    addNumber('ВЗРЫВ', Math.round(VW/2) - 16, 44, 'skill');
+    particles.push({ x: enemy.x, y: FLOOR - 20, vx:0, vy:0, life:0.4, max:0.4, col:'#ffb347', size:1, ring:true, r0:6, r1:52 });
+    SFX.skill();
+    refreshHeroHp();
   } else {
     buff = 12;
     SFX.skill();
@@ -4300,6 +4661,7 @@ function buildUI(){
       '<button class="fbtn" data-filter="ring">КОЛЬЦА</button>' +
       '<button class="fbtn sort" id="bag-sort" data-sort="rarity">ПО РЕДКОСТИ</button>' +
     '</div>' +
+    '<div class="set-info hidden" id="set-info"></div>' +
     '<div class="bag-grid" id="bag-grid"></div>' +
     '<div class="item-card hidden" id="item-card"></div>';
 
@@ -4423,7 +4785,7 @@ function refreshRitual(){
 }
 
 function refreshSkills(){
-  for(const k of ['q','e']){
+  for(const k of ['q','e','r']){
     const el = $('#sk-' + k), fill = $('#cd-' + k);
     if(!el) continue;
     const p = cd[k] / CD_MAX[k];
@@ -4517,6 +4879,16 @@ function refreshBag(){
   }
   const priceEl = $('#forge-price');
   if(priceEl) priceEl.textContent = fmt(forgeCost());
+  const setInfo = $('#set-info');
+  if(setInfo){
+    const g = G();
+    if(g.setName){
+      setInfo.textContent = 'КОМПЛЕКТ: ' + g.setName + ' (' + g.setPieces + '/' + g.setTotal + ') · ' + (g.setText || '');
+      setInfo.classList.remove('hidden');
+    } else {
+      setInfo.classList.add('hidden');
+    }
+  }
   const cnt = $('#bag-count');
   if(cnt) cnt.textContent = S.bag.length + '/' + BAL.bagMax;
 
@@ -4555,6 +4927,15 @@ function itemCardHTML(it, actions){
   }
   const cmpStats = cur ? cur.stats : {};
   for(const k in it.stats) html += statRow(k, it.stats[k], cmpStats[k] !== undefined ? cmpStats[k] : null);
+  if(it.setId){
+    const set = ITEMS.SETS && ITEMS.SETS[it.setId];
+    const own = Object.keys(S.gear).filter(k => S.gear[k] && S.gear[k].setId === it.setId).length;
+    html += '<div class="card-set">КОМПЛЕКТ: ' + esc((set && set.name) || it.setId) +
+      ' · ' + own + '/' + ((set && set.total) || 3) + '</div>';
+  }
+  if(it.unique){
+    html += '<div class="card-unique">◆ ' + esc(it.unique) + '</div>';
+  }
   if(cur){
     const d = ITEMS.itemScore(it) - ITEMS.itemScore(cur);
     html += '<div class="card-score ' + (d >= 0 ? 'up' : 'down') + '">' +
@@ -5266,8 +5647,9 @@ function drawDecals(c){
 function drawHero(c){
   const spr = SPR.hero;
   const bob = Math.sin(T*2.4)*0.8;
+  const impact = hero.impact > 0 ? 1 : 0;
   const lx = HERO_X + (hero.lunge > 0 ? 2 : 0) - (hero.recoil > 0 ? 2 : 0);
-  const ty = Math.round(FLOOR - spr.h + bob);
+  const ty = Math.round(FLOOR - spr.h + bob + (hero.impact > 0 ? 1 : 0));
 
   // свет вокруг героя
   c.globalCompositeOperation = 'lighter';
@@ -5518,6 +5900,18 @@ function render(){
   drawNumbers(c);
   c.restore();
 
+  // цветной оттенок зоны — у каждого склепа свой воздух
+  {
+    const zi = Math.floor((S.wave-1)/BAL.zoneLen) % ZONES.length;
+    const tint = ZONES[zi].glow;
+    c.globalCompositeOperation = 'soft-light';
+    c.globalAlpha = 0.10;
+    c.fillStyle = tint;
+    c.fillRect(0, 0, VW, VH);
+    c.globalCompositeOperation = 'source-over';
+    c.globalAlpha = 1;
+  }
+
   drawVignette(c);
 
   if(flashRed > 0){
@@ -5557,6 +5951,17 @@ function update(dt){
     offlineGain = 0;
     refreshUI();
     saveSoon();
+  }
+
+  // тяжёлое дыхание босса
+  if(enemy && enemy.boss && enemy.dying <= 0 && S.started){
+    bossBeat -= dt;
+    if(bossBeat <= 0){ bossBeat = 1.25; SFX.heart(); }
+  }
+
+  if(ev.t > 0){
+    ev.t -= dt;
+    if(ev.t <= 0){ ev.t = 0; ev.id = null; ev.def = null; updatePlate(); }
   }
 
   // редкие звуки склепа
@@ -5654,6 +6059,7 @@ function update(dt){
   if(flashRed > 0) flashRed = Math.max(0, flashRed - dt*1.6);
   if(hero.swing > 0) hero.swing = Math.max(0, hero.swing - dt);
   if(hero.lunge > 0) hero.lunge = Math.max(0, hero.lunge - dt);
+  if(hero.impact > 0) hero.impact = Math.max(0, hero.impact - dt);
   if(hero.recoil > 0) hero.recoil = Math.max(0, hero.recoil - dt);
   if(enemy && enemy.intro > 0) enemy.intro = Math.max(0, enemy.intro - dt);
   if(buff > 0) buff = Math.max(0, buff - dt);
@@ -5826,10 +6232,13 @@ function bind(){
     if(ev.code === 'Space' || ev.key === ' '){ ev.preventDefault(); attack(); }
     else if(ev.key === 'q' || ev.key === 'Q' || ev.key === 'й' || ev.key === 'Й') useSkill('q');
     else if(ev.key === 'e' || ev.key === 'E' || ev.key === 'у' || ev.key === 'У') useSkill('e');
+    else if(ev.key === 'r' || ev.key === 'R' || ev.key === 'к' || ev.key === 'К') useSkill('r');
   });
 
   $('#sk-q').addEventListener('click', () => useSkill('q'));
   $('#sk-e').addEventListener('click', () => useSkill('e'));
+  const skR = $('#sk-r');
+  if(skR) skR.addEventListener('click', () => useSkill('r'));
 
   $('#modal-ok').addEventListener('click', () => {
     const cb = modalCb;

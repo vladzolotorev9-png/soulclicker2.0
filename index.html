@@ -1198,6 +1198,12 @@ button:focus-visible, a:focus-visible{
 #modal.gated #modal-cancel{display:none;}
 .prof-hint.accent{color:#ffd35c;}
 
+/* метка сборки на входе */
+.build-tag{
+  font-size:8px; letter-spacing:.24em; color:#6f6484;
+  margin:0 0 6px; text-align:center;
+}
+
 </style>
 </head>
 <body>
@@ -1304,6 +1310,7 @@ button:focus-visible, a:focus-visible{
 
 <div class="overlay" id="intro">
   <div class="intro-box">
+      <div class="build-tag" id="build-tag"></div>
     <div class="intro-rune" id="intro-rune"></div>
     <h1>ПЕПЕЛЬНЫЙ<br>ПРИЗЫВ</h1>
     <p class="lore">
@@ -1343,7 +1350,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795473652';
+window.BUILD_STAMP = '1795515723';
 
 /* ============================================================
    Один вход в игру.
@@ -1902,11 +1909,12 @@ function shadeCanvas(c){
       const dark = Math.min(down, right);
 
       let factor = 1;
+      let outline = false;
       if (lit <= 1) factor = 1.34;        // блик по верхнему-левому краю
       else if (lit === 2) factor = 1.15;
-      else if (dark <= 1) factor = 0.66;  // тень по нижнему-правому краю
-      else if (dark === 2) factor = 0.84;
-      else if (dark === 3) factor = 0.94;
+      else if (dark <= 1){ factor = 0.55; outline = true; }  // тёмный контур
+      else if (dark === 2) factor = 0.80;
+      else if (dark === 3) factor = 0.92;
 
       // объём: верх спрайта светлее, низ уходит в тень
       const vy = h > 1 ? y / (h - 1) : 0;
@@ -1914,9 +1922,9 @@ function shadeCanvas(c){
 
       // тени уводим в холод, блики — в тепло
       const isShade = factor < 0.98;
-      out[i]     = Math.min(255, d[i]     * factor + (lit <= 1 ? 14 : 0) - (isShade ? 2 : 0));
+      out[i]     = Math.min(255, d[i]     * factor + (lit <= 1 ? 14 : 0) - (outline ? 4 : (isShade ? 2 : 0)));
       out[i + 1] = Math.min(255, d[i + 1] * factor + (lit <= 1 ? 8 : 0));
-      out[i + 2] = Math.min(255, d[i + 2] * factor + (lit <= 1 ? 4 : 0) + (isShade ? 8 : 0));
+      out[i + 2] = Math.min(255, d[i + 2] * factor + (lit <= 1 ? 4 : 0) + (outline ? 14 : (isShade ? 8 : 0)));
     }
   }
   img.data.set(out);
@@ -4627,6 +4635,7 @@ function openProfile(){
           '<button class="big-btn small wide" id="tg-btn">ВОЙТИ И СВЯЗАТЬ</button>' +
         '</div>' +
         '<div class="auth-msg" id="auth-msg"></div>' +
+        '<button class="mini-btn wide" id="refresh-game">ОБНОВИТЬ ВЕРСИЮ ИГРЫ</button>' +
         '<div class="auth-orl"><span>или по коду доступа</span></div>' +
         '<div class="auth-form" id="claim-form">' +
           '<input id="claim-code" placeholder="КОД (XXXX-XXXX)" autocomplete="off" maxlength="9">' +
@@ -4714,6 +4723,7 @@ function openProfile(){
           '<button class="mini-btn wide" id="acc-up">СОЗДАТЬ АККАУНТ</button>' +
         '</div>' +
         '<div class="auth-msg" id="auth-msg"></div>' +
+        '<button class="mini-btn wide" id="refresh-game">ОБНОВИТЬ ВЕРСИЮ ИГРЫ</button>' +
         '<div class="auth-orl"><span>или по коду доступа</span></div>' +
         '<div class="auth-form" id="claim-form">' +
           '<input id="claim-code" placeholder="КОД (XXXX-XXXX)" autocomplete="off" maxlength="9">' +
@@ -4792,6 +4802,19 @@ function openProfile(){
   enter($('#up-pass2'), $('#up-btn'));
 
   // Telegram: связать с аккаунтом по нику
+  const refreshBtn = $('#refresh-game');
+  if(refreshBtn){
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'ОБНОВЛЯЮ…';
+      const go = () => { location.replace(location.pathname + '?v=' + Date.now()); };
+      try{
+        if(window.caches && caches.keys) caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(go).catch(go);
+        else go();
+      }catch(e){ go(); }
+    });
+  }
+
   const accIn = $('#acc-in');
   const accUp = $('#acc-up');
   const accLogin = () => (($('#acc-login') || {}).value || '').trim();
@@ -5846,6 +5869,17 @@ function boot(){
 
   if(window.TG && TG.init) TG.init();
 }
+
+// версия сборки видна сразу на входе
+(function(){
+  try{
+    const el = document.getElementById('build-tag');
+    if(el){
+      const s = window.BUILD_STAMP ? String(window.BUILD_STAMP).slice(-5) : 'dev';
+      el.textContent = 'СБОРКА ' + s;
+    }
+  }catch(e){}
+})();
 
 window.GAME = {
   state: () => S,

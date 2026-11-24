@@ -1350,7 +1350,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795517530';
+window.BUILD_STAMP = '1795519288';
 
 /* ============================================================
    Один вход в игру.
@@ -2768,7 +2768,12 @@ function pull(){
 
   return getJSON('/load?' + q.toString()).then(r => {
     pulling = false;
-    if(!r.ok && unauthorized(r)){ status = 'error'; store(); recover(); return false; }
+    if(!r.ok && unauthorized(r)){
+      // Серверный аккаунт (ник+пароль): личность уже подтверждена входом.
+      // Сессию не сбрасываем, просто остаёмся без облака.
+      if(me && me.pid && me.pid.indexOf('u:') === 0){ status = 'off'; store(); return false; }
+      status = 'error'; store(); recover(); return false;
+    }
     if(!r.ok){ status = 'error'; store(); return false; }
     status = 'cloud'; store();
     if(r.data.player) me = r.data.player;
@@ -2808,7 +2813,11 @@ function pushNow(force){
   return request('/save', { pid: me.pid, save, ts: save.ts || Date.now() })
     .then(r => {
       if(r.ok){ status = 'cloud'; }
-      else if(unauthorized(r)){ status = 'error'; store(); recover(); return false; }
+      else if(unauthorized(r)){
+        // серверный аккаунт (ник+пароль) не сбрасываем — просто без облака
+        if(me && me.pid && me.pid.indexOf('u:') === 0){ status = 'off'; store(); return false; }
+        status = 'error'; store(); recover(); return false;
+      }
       else if(r.data && r.data.error === 'Слишком часто'){
         status = 'cloud';
         pushTimer = setTimeout(() => { pushTimer = 0; pushNow(); }, 1700);
@@ -2877,6 +2886,7 @@ function signup(login, password){
       .then(r => {
         if(r.ok && r.data.player){
           me = r.data.player;
+          if(!me.login && me.name) me.login = me.name;
           status = 'cloud';
           store();
           return { ok:true, player: me };
@@ -2939,6 +2949,7 @@ function bindCreds(login, password){
       .then(r => {
         if(r.ok && r.data.player){
           me = r.data.player;
+          if(!me.login && me.name) me.login = me.name;
           status = 'cloud';
           store();
           return { ok:true, player: me };
@@ -2966,6 +2977,7 @@ function signin(login, password){
       .then(r => {
         if(r.ok && r.data.player){
           me = r.data.player;
+          if(!me.login && me.name) me.login = me.name;
           status = 'cloud';
           store();
           return pull().then(() => ({ ok:true, player: me }));

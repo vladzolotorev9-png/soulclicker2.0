@@ -1350,7 +1350,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795521790';
+window.BUILD_STAMP = '1795522361';
 
 /* ============================================================
    Один вход в игру.
@@ -2987,7 +2987,8 @@ function signin(login, password){
       .then(r => {
         if(r.ok && r.data.player){
           me = r.data.player;
-          if(!me.login && me.name) me.login = me.name;
+          me.login = login;                       // вошли этим ником — его и показываем
+          if(!me.name || me.name === 'ГОСТЬ') me.name = login;
           clearOut();
           status = 'cloud';
           store();

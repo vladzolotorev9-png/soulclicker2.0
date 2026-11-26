@@ -1252,6 +1252,13 @@ button:focus-visible, a:focus-visible{
   50%{box-shadow:0 0 18px rgba(217,165,59,.55);}
 }
 
+/* кнопка «поделиться» */
+.share-btn{
+  background:linear-gradient(180deg,#2f7fbf,#1d4f7a);
+  color:#e8f4ff; border-color:#5fa8d8;
+}
+.share-btn:hover{background:linear-gradient(180deg,#3d96d8,#245f8f);}
+
 </style>
 </head>
 <body>
@@ -1404,7 +1411,7 @@ button:focus-visible, a:focus-visible{
    ============================================================ */
 window.API_BASE = 'https://soulclicker-bot.vladzolotorev9.workers.dev';
 window.STATIC_HOST = true;
-window.BUILD_STAMP = '1795561167';
+window.BUILD_STAMP = '1795644867';
 
 /* ============================================================
    Один вход в игру.
@@ -4262,6 +4269,75 @@ function equipBest(){
   return changed;
 }
 
+/* ---------- «поделиться» и приглашения ---------- */
+const SHARE_BONUS = 1000;
+const REF_BONUS = 1500;
+const SHARE_KEY = 'ashen-share-day';
+const REF_KEY = 'ashen-ref-by';
+
+// бонус приглашённому: если в ссылке был ?ref=…
+function checkReferral(){
+  try{
+    const ref = new URLSearchParams(location.search).get('ref');
+    if(!ref) return 0;
+    if(localStorage.getItem(REF_KEY)) return 0;
+    localStorage.setItem(REF_KEY, ref);
+    return REF_BONUS;
+  }catch(e){ return 0; }
+}
+
+function canShare(){
+  try{
+    const today = new Date().toISOString().slice(0, 10);
+    return localStorage.getItem(SHARE_KEY) !== today;
+  }catch(e){ return true; }
+}
+
+function markShared(){
+  try{ localStorage.setItem(SHARE_KEY, new Date().toISOString().slice(0, 10)); }catch(e){}
+}
+
+function gameLink(){
+  const ref = (window.ACCOUNT && window.ACCOUNT.info && window.ACCOUNT.info().pid) || '';
+  const base = location.origin + location.pathname;
+  return ref ? base + '?ref=' + encodeURIComponent(ref) : base;
+}
+
+function doShare(){
+  const text = 'ПЕПЕЛЬНЫЙ ПРИЗЫВ — пиксельный дарк-фэнтези кликер. Бей тварей, собирай души, выбивай снаряжение.';
+  const url = 'https://t.me/share/url?url=' + encodeURIComponent(gameLink()) + '&text=' + encodeURIComponent(text);
+  let opened = false;
+  try{
+    if(navigator.share){
+      navigator.share({ title: 'Пепельный призыв', text, url: gameLink() }).then(() => award(true)).catch(() => {});
+      opened = true;
+    }
+  }catch(e){}
+  if(!opened){
+    try{ window.open(url, '_blank'); }catch(e){ location.href = url; }
+    award(true);
+  }
+}
+
+function award(fromShare){
+  if(fromShare && !canShare()){
+    toast('НАГРАДА ЗА ПОДЕЛЮ ЗАВТРА');
+    return;
+  }
+  if(fromShare){
+    markShared();
+    S.souls += SHARE_BONUS;
+    S.total += SHARE_BONUS;
+    toast('СПАСИБО! +' + fmt(SHARE_BONUS) + ' ДУШ');
+  } else {
+    S.souls += REF_BONUS;
+    S.total += REF_BONUS;
+    toast('БОНУС ЗА ПРИГЛАШЕНИЕ · +' + fmt(REF_BONUS) + ' ДУШ');
+  }
+  refreshUI();
+  saveSoon();
+}
+
 /* ---------- кузня: души в снаряжение ---------- */
 function forgeCost(){
   return Math.ceil(320 * Math.pow(1.22, Math.max(1, S.best)));
@@ -5093,6 +5169,7 @@ function openProfile(){
   const inShell = tgSdk || tgUa;
 
   const buildTag = window.BUILD_STAMP ? ('СБОРКА ' + String(window.BUILD_STAMP).slice(-5) + ' · ') : '';
+  const statsLine = '<div class="prof-debug" id="players-line"></div>';
   const storageInfo = (() => {
     try{
       const names = [];
@@ -5150,6 +5227,7 @@ function openProfile(){
         '</div>' +
         '<div class="auth-msg" id="auth-msg"></div>' +
         '<button class="mini-btn wide" id="refresh-game">ОБНОВИТЬ ВЕРСИЮ ИГРЫ</button>' +
+        '<button class="big-btn small wide share-btn" id="share-game">ПОДЕЛИТЬСЯ ИГРОЙ · +' + fmt(SHARE_BONUS) + ' ДУШ</button>' +
         '<div class="auth-orl"><span>или по коду доступа</span></div>' +
         '<div class="auth-form" id="claim-form">' +
           '<input id="claim-code" placeholder="КОД (XXXX-XXXX)" autocomplete="off" maxlength="9">' +
@@ -5168,6 +5246,7 @@ function openProfile(){
             : 'Прогресс хранится в аккаунте.<br>На другом устройстве войдите этим же ником.') +
         '</div>' +
         (info.code ? '<div class="prof-code">' + esc(info.code) + '</div>' : '') +
+        '<button class="big-btn small wide share-btn" id="share-game">ПОДЕЛИТЬСЯ ИГРОЙ · +' + fmt(SHARE_BONUS) + ' ДУШ</button>' +
         '<button class="mini-btn wide" id="logout-btn">ВЫЙТИ ИЗ АККАУНТА</button>' +
       '</div>';
   } else if(info.pid && !byLogin && !byTelegram){
@@ -5177,6 +5256,7 @@ function openProfile(){
       '<div class="prof">' +
         diag +
         '<div class="prof-debug">' + storageInfo + '</div>' +
+        statsLine +
         '<div class="prof-row"><span>АККАУНТ</span><b>НУЖНА РЕГИСТРАЦИЯ</b></div>' +
         progressBlock +
         (info.code
@@ -5229,6 +5309,7 @@ function openProfile(){
       '<div class="prof">' +
         diag +
         '<div class="prof-debug">' + storageInfo + '</div>' +
+        statsLine +
         backBlock +
         tgBlock +
         '<div class="prof-row"><span>АККАУНТ</span><b>НИК И ПАРОЛЬ</b></div>' +
@@ -5239,6 +5320,7 @@ function openProfile(){
           '<button class="mini-btn wide" id="acc-up">СОЗДАТЬ АККАУНТ</button>' +
         '</div>' +
         '<div class="auth-msg" id="auth-msg"></div>' +
+        '<button class="big-btn small wide share-btn" id="share-game">ПОДЕЛИТЬСЯ ИГРОЙ · +' + fmt(SHARE_BONUS) + ' ДУШ</button>' +
         '<button class="mini-btn wide" id="refresh-game">ОБНОВИТЬ ВЕРСИЮ ИГРЫ</button>' +
         '<div class="auth-orl"><span>или по коду доступа</span></div>' +
         '<div class="auth-form" id="claim-form">' +
@@ -5249,6 +5331,16 @@ function openProfile(){
   }
 
   showModal('ПРОФИЛЬ', html, 'ЗАКРЫТЬ', null, '×');
+
+  // сколько всего игроков — если сервер умеет считать
+  (function(){
+    const line = $('#players-line');
+    if(!line) return;
+    fetch((((window.API_BASE||'').replace(/\/+$/,'')) + '/api/stats'), { cache:'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if(d && d.players) line.textContent = 'ИГРОКОВ В ИГРЕ: ' + d.players; })
+      .catch(() => {});
+  })();
 
   const msg = $('#auth-msg');
   const say = (text, bad) => {
@@ -5318,6 +5410,9 @@ function openProfile(){
   enter($('#up-pass2'), $('#up-btn'));
 
   // Telegram: связать с аккаунтом по нику
+  const shareBtns = document.querySelectorAll('#share-game');
+  shareBtns.forEach(btn => btn.addEventListener('click', () => { SFX.buy(); doShare(); }));
+
   const refreshBtn = $('#refresh-game');
   if(refreshBtn){
     refreshBtn.addEventListener('click', () => {
